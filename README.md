@@ -1,7 +1,7 @@
 ## GPU env
 
 ### Prerequisites
-[Docker](https://www.nvidia.com/Download/index.aspx) <br/>
+[Docker](https://www.docker.com/) <br/>
 [Nvidia drivers](https://www.nvidia.com/Download/index.aspx)
 
 ### Build and run Docker
