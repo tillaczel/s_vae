@@ -1,0 +1,30 @@
+experiment:
+  name: 'name'
+  save_dir: '../local/logs'
+  seed: 1
+
+data:
+  name: 'MNIST'
+  path: '../local/data'
+  num_workers: 8
+
+model:
+  name: 'ae'
+  input_shape: 784
+
+training:
+  batch_size: 64
+  max_epochs: 5
+  optimizer:
+    name: 'sgd'
+    lr: 0.1
+  scheduler:
+    name: 'plateau'
+    mode: 'min'
+    patience: 3
+    factor: 0.1
+    min_lr: 0.0000001
+
+gpu: 1
+
+
