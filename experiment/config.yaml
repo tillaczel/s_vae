@@ -4,9 +4,14 @@ experiment:
   seed: 1
 
 data:
-  name: 'MNIST'
+  name: 'synth'
   path: '../local/data'
+  train_ratio: 0.8
   num_workers: 8
+  latent_dim: 3
+  observed_dim: 784
+  n_dev_samples: 50000
+  n_test_samples: 10000
 
 model:
   name: 'ae'
@@ -24,6 +29,7 @@ training:
     patience: 3
     factor: 0.1
     min_lr: 0.0000001
+    monitor: 'train_loss'
 
 gpu: 1
 
