@@ -9,7 +9,7 @@ data:
   train_ratio: 0.8
   num_workers: 8
   latent_dim: 3  # Only for synthetic
-  observed_dim: 784  # Only for synthetic
+  observed_dim: 10  # Only for synthetic
   n_dev_samples: 50000  # Only for synthetic
   n_test_samples: 10000  # Only for synthetic
 
@@ -19,7 +19,7 @@ model:
   backbone:
     name: 'linear'  # Options: ['linear', 'conv']
     hidden_dims: !!python/list [32, 64]
-    data_shape: !!python/tuple [784]
+    data_shape: !!python/tuple [10]
 
 training:
   batch_size: 64
@@ -33,7 +33,7 @@ training:
     patience: 3
     factor: 0.1
     min_lr: 0.0000001
-    monitor: 'train_loss'
+    monitor: 'train/loss'
 
 gpu: 1
 

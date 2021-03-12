@@ -1,4 +1,5 @@
 from s_vae.models.ae import AE
+from s_vae.models.vae import VAE
 from s_vae.models.backbone.linear import linear_encoder, linear_decoder
 from s_vae.models.backbone.conv import conv_encoder, conv_decoder
 
@@ -24,5 +25,7 @@ def build_model(model_config: dict):
     latent_dim = model_config['latent_dim']
     if name == 'ae':
         return AE(encoder, decoder, encoder_out_dim, latent_dim)
+    if name == 'vae':
+        return VAE(encoder, decoder, encoder_out_dim, latent_dim)
     else:
         raise ValueError(f'{name} not in models')

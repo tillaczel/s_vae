@@ -1,9 +1,10 @@
-import torch
 from torch import nn
+from torch.nn import functional as F
+from torch.nn import Module
 
 
 class AE(nn.Module):
-    def __init__(self, encoder, decoder, encoder_out_dim, latent_dim):
+    def __init__(self, encoder: Module, decoder: Module, encoder_out_dim: int, latent_dim: int):
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
@@ -12,6 +13,9 @@ class AE(nn.Module):
 
     def forward(self, x):
         encoded = self.encoder(x)
-        latent = self.latent(encoded)
-        reconstructed = self.decoder(latent)
-        return reconstructed
+        z = self.latent(encoded)
+        x_hat = self.decoder(z)
+        return [x, x_hat]
+
+    def loss_function(self, x, x_hat):
+        return {'loss': F.mse_loss(x_hat, x)}
