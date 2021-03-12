@@ -14,7 +14,6 @@ class EngineModule(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        x = x.view(x.size(0), -1)
         x_hat = self.model(x)
         loss = F.mse_loss(x_hat, x)
         self.log('train_loss', loss)
@@ -25,7 +24,6 @@ class EngineModule(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        x = x.view(x.size(0), -1)
         x_hat = self.model(x)
         loss = F.mse_loss(x_hat, x)
         self.log('val_loss', loss)
@@ -35,7 +33,6 @@ class EngineModule(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         x, y = batch
-        x = x.view(x.size(0), -1)
         x_hat = self.model(x)
         loss = F.mse_loss(x_hat, x)
         self.log('test_loss', loss)
