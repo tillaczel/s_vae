@@ -4,29 +4,30 @@ experiment:
   seed: 1
 
 data:
-  name: 'synth'  # Options: ['MNIST', 'synth']
+  name: 'MNIST'  # Options: ['MNIST', 'synth']
   path: '../local/data'
   train_ratio: 0.8
   num_workers: 8
   latent_dim: 3  # Only for synthetic
-  observed_dim: 10  # Only for synthetic
+  observed_dim: 784  # Only for synthetic
   n_dev_samples: 50000  # Only for synthetic
   n_test_samples: 10000  # Only for synthetic
 
 model:
-  name: 'vae'
-  latent_dim : 48
+  name: 'ae'
+  latent_dim : 3
+  kl_coeff: 1.
   backbone:
     name: 'linear'  # Options: ['linear', 'conv']
     hidden_dims: !!python/list [32, 64]
-    data_shape: !!python/tuple [10]
+    data_shape: !!python/tuple [1, 28, 28]
 
 training:
-  batch_size: 64
-  max_epochs: 5
+  batch_size: 128
+  max_epochs: 100
   optimizer:
-    name: 'sgd'
-    lr: 0.1
+    name: 'adam'
+    lr: 0.0001
   scheduler:
     name: 'plateau'
     mode: 'min'

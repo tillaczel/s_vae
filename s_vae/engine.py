@@ -7,16 +7,21 @@ class EngineModule(pl.LightningModule):
 
     def __init__(self, config: dict):
         self.config = config
+        self.batch_size = config['training']['batch_size']
         super().__init__()
         self.model = build_model(config['model'])
+
+    @property
+    def lr(self):
+        return self.optimizers().param_groups[0]['lr']
 
     def forward(self, x):
         return self.model(x)
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        results = self.forward(x)
-        loss_metrics = self.model.loss_function(*results)
+        loss_metrics = self.model.step(x)
+        self.log('lr', self.lr, prog_bar=True, on_step=True, logger=False)
         return loss_metrics
 
     def training_epoch_end(self, outputs: list):
@@ -24,8 +29,7 @@ class EngineModule(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        results = self.forward(x)
-        loss_metrics = self.model.loss_function(*results)
+        loss_metrics = self.model.step(x)
         return loss_metrics
 
     def validation_epoch_end(self, outputs: list):
@@ -33,8 +37,7 @@ class EngineModule(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         x, y = batch
-        results = self.forward(x)
-        loss_metrics = self.model.loss_function(*results)
+        loss_metrics = self.model.step(x)
         return loss_metrics
 
     def test_epoch_end(self, outputs: list):
@@ -50,12 +53,14 @@ class EngineModule(pl.LightningModule):
             return optimizer
 
     def transform_and_log_results(self, outputs, split):
-        loss_metrics = dict()
+        metrics = dict()
         for key in outputs[0].keys():
-            loss_metrics[key] = torch.stack([x[key] for x in outputs]).mean()
-        for key, value in loss_metrics.items():
-            self.log(f'{split}/{key}', value)
+            metrics[f'{split}/{key}'] = torch.stack([x[key] for x in outputs]).mean()
+        self.logger.log_metrics(metrics, step=self.current_epoch)
 
+        _monitor_metric = self.config['training']['scheduler']['monitor']
+        if _monitor_metric in metrics.keys():
+            self.trainer.logger_connector.callback_metrics[_monitor_metric] = metrics[_monitor_metric]
 
 
 def get_optimizer(optim_config: dict, params):
