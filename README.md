@@ -12,9 +12,9 @@ docker run --rm -it --name='training' -v PATH_TO_PROHJECT/s_vae:/s_vae --gpus al
 ```
 Note you need to replace PATH_TO_PROHJECT with your path.
 
-## Run experiment
+## Run training
 ```
-cd s_vae/experiment
+cd s_vae/experiment/train
 python run.py 
 ```
 

@@ -3,12 +3,12 @@ import torch
 
 from s_vae.models import build_model
 
+
 class EngineModule(pl.LightningModule):
 
     def __init__(self, config: dict):
-        self.config = config
-        self.batch_size = config['training']['batch_size']
         super().__init__()
+        self.config = config
         self.model = build_model(config['model'])
 
     @property
@@ -58,9 +58,11 @@ class EngineModule(pl.LightningModule):
             metrics[f'{split}/{key}'] = torch.stack([x[key] for x in outputs]).mean()
         self.logger.log_metrics(metrics, step=self.current_epoch)
 
-        _monitor_metric = self.config['training']['scheduler']['monitor']
-        if _monitor_metric in metrics.keys():
-            self.trainer.logger_connector.callback_metrics[_monitor_metric] = metrics[_monitor_metric]
+        _callback_metrics = [self.config['training']['scheduler']['monitor'],
+                             self.config['training']['ckpt_callback']['monitor']]
+        for _callback_metric in _callback_metrics:
+            if _callback_metric in metrics.keys():
+                self.trainer.logger_connector.callback_metrics[_callback_metric] = metrics[_callback_metric]
 
 
 def get_optimizer(optim_config: dict, params):

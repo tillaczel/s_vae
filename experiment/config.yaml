@@ -1,11 +1,11 @@
 experiment:
   name: 'name'
-  save_dir: '../local/logs'
+  save_dir: '../../local/logs'
   seed: 1
 
 data:
   name: 'MNIST'  # Options: ['MNIST', 'synth']
-  path: '../local/data'
+  path: '../../local/data'
   train_ratio: 0.8
   num_workers: 8
   latent_dim: 3  # Only for synthetic
@@ -14,7 +14,7 @@ data:
   n_test_samples: 10000  # Only for synthetic
 
 model:
-  name: 'ae'
+  name: 'vae'
   latent_dim : 3
   kl_coeff: 1.
   backbone:
@@ -35,7 +35,14 @@ training:
     factor: 0.1
     min_lr: 0.0000001
     monitor: 'train/loss'
+  ckpt_callback:
+    monitor: 'valid/loss'
+    save_top_k: 5
 
 gpu: 1
+
+embedding_projector:
+  version: 6
+  epoch: 9
 
 

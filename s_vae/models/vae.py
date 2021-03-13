@@ -27,14 +27,18 @@ class VAE(nn.Module):
         reconstructed = self.decoder(z)
         return reconstructed
 
-    def forward(self, x):
+    def _forward(self, x):
         mu, log_var = self.encode(x)
         p, q, z = self.sample(mu, log_var)
         x_hat = self.decode(z)
         return x_hat, mu, log_var, p, q, z
 
+    def forward(self, x):
+        x_hat, mu, log_var, p, q, z = self._forward(x)
+        return x_hat, z
+
     def step(self, x):
-        x_hat, mu, log_var, p, q, z = self.forward(x)
+        x_hat, mu, log_var, p, q, z = self._forward(x)
 
         loss_recon = F.mse_loss(x_hat, x, reduction='mean')
 
