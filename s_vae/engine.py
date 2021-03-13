@@ -13,32 +13,6 @@ class EngineModule(pl.LightningModule):
     def forward(self, x):
         return self.model(x)
 
-    # def training_step(self, batch, batch_idx, optimizer_idx = 0):
-    #     real_img, labels = batch
-    #     self.curr_device = real_img.device
-    #
-    #     results = self.forward(real_img, labels = labels)
-    #     train_loss = self.model.loss_function(*results,
-    #                                           M_N = self.params['batch_size']/ self.num_train_imgs,
-    #                                           optimizer_idx=optimizer_idx,
-    #                                           batch_idx = batch_idx)
-    #
-    #     self.logger.experiment.log({key: val.item() for key, val in train_loss.items()})
-    #
-    #     return train_loss
-    #
-    # def validation_step(self, batch, batch_idx, optimizer_idx = 0):
-    #     real_img, labels = batch
-    #     self.curr_device = real_img.device
-    #
-    #     results = self.forward(real_img, labels = labels)
-    #     val_loss = self.model.loss_function(*results,
-    #                                         M_N = self.params['batch_size']/ self.num_val_imgs,
-    #                                         optimizer_idx = optimizer_idx,
-    #                                         batch_idx = batch_idx)
-    #
-    #     return val_loss
-
     def training_step(self, batch, batch_idx):
         x, y = batch
         results = self.forward(x)
