@@ -6,7 +6,7 @@ import requests
 import os
 
 
-def create_MNIST(path: str):
+def create_MNIST(path: str, train_ratio):
     # ------------------------------------------------------------------------------------------------------------ #
     # torchtext newest update (04.03.2021) broke pytorch-lightning, but older torch version can not download MNIST
     # because of a new redirect. Temporary solve to download MNIST manually
@@ -23,7 +23,8 @@ def create_MNIST(path: str):
 
     transform = transforms.Compose([transforms.ToTensor()])
     dataset = MNIST(root=path, train=True, transform=transform, download=True)
-    train_set, valid_set = random_split(dataset, [50000, 10000])
+    train_size = int(train_ratio * len(dataset))
+    train_set, valid_set = random_split(dataset, [train_size, len(dataset) - train_size])
     test_set = MNIST(root=path, train=False, transform=transform, download=True)
     return train_set, valid_set, test_set
 

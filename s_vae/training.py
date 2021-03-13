@@ -7,7 +7,7 @@ from s_vae.data import create_dataset
 
 
 def create_data_loaders(config: dict):
-    train_set, valid_set, test_set = create_dataset(config)
+    train_set, valid_set, test_set = create_dataset(config['data'], config['experiment']['seed'])
 
     batch_size = config['training'].get('batch_size', 32)
     num_workers = config['data'].get('num_workers', 1)
@@ -41,5 +41,5 @@ def train(config: dict):
     engine = EngineModule(config)
     trainer.fit(model=engine, train_dataloader=train_loader, val_dataloaders=valid_loader)
 
-    trainer.test(test_dataloaders=test_loader)
+    # trainer.test(test_dataloaders=test_loader)
 

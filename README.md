@@ -6,8 +6,8 @@
 
 ### Build and run Docker
 ```
-sudo docker build -t s_vae .
-sudo docker run --rm -it -v PATH_TO_PROHJECT/s_vae:/s_vae --gpus all s_vae
+docker build -t s_vae .
+docker run --rm -it -v PATH_TO_PROHJECT/s_vae:/s_vae --gpus all s_vae
 ```
 Note you need to replace PATH_TO_PROHJECT with your path.
 

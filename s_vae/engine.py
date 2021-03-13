@@ -45,8 +45,12 @@ class EngineModule(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = get_optimizer(self.config['training']['optimizer'], self.parameters())
-        scheduler = get_scheduler(self.config['training']['scheduler'], optimizer)
-        return [optimizer], [scheduler]
+        scheduler_config = self.config['training'].get('scheduler', None)
+        if scheduler_config is not None:
+            scheduler = get_scheduler(scheduler_config, optimizer)
+            return [optimizer], [scheduler]
+        else:
+            return optimizer
 
 
 def get_optimizer(optim_config: dict, params):
@@ -63,6 +67,7 @@ def get_optimizer(optim_config: dict, params):
 
 def get_scheduler(scheduler_config, optimizer):
     name = scheduler_config['name']
+    monitor = scheduler_config['monitor']
 
     if name == 'plateau':
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
@@ -70,7 +75,7 @@ def get_scheduler(scheduler_config, optimizer):
                                                                patience=scheduler_config['patience'],
                                                                factor=scheduler_config['factor'],
                                                                min_lr=scheduler_config['min_lr'])
-        return dict(scheduler=scheduler, monitor='train_loss')
+        return dict(scheduler=scheduler, monitor=monitor)
     else:
         raise ValueError(f'{name} not in schedulers')
 
