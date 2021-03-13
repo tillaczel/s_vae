@@ -1,10 +1,9 @@
 from torch import nn
 from torch.nn import functional as F
-from torch.nn import Module
 
 
 class AE(nn.Module):
-    def __init__(self, encoder: Module, decoder: Module, encoder_out_dim: int, latent_dim: int):
+    def __init__(self, encoder: nn.Module, decoder: nn.Module, encoder_out_dim: int, latent_dim: int):
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder

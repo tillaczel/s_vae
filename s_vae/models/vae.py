@@ -1,11 +1,10 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
-from torch.nn import Module
 
 
-class VAE:
-    def __init__(self, encoder: Module, decoder: Module, encoder_out_dim: int, latent_dim: int):
+class VAE(nn.Module):
+    def __init__(self, encoder: nn.Module, decoder: nn.Module, encoder_out_dim: int, latent_dim: int):
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
@@ -24,7 +23,7 @@ class VAE:
         return mu, log_var
 
     def decode(self, z):
-        reconstructed = self.decoder_input(z)
+        reconstructed = self.decoder(z)
         return reconstructed
 
     def reparameterize(self, mu, log_var):
