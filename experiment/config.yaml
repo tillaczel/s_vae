@@ -15,8 +15,8 @@ data:
 
 model:
   name: 'vae'
-  latent_dim : 3
-  kl_coeff: 1.
+  latent_dim : 16
+  kl_coeff: 0.01
   backbone:
     name: 'linear'  # Options: ['linear', 'conv']
     hidden_dims: !!python/list [32, 64]
@@ -24,7 +24,7 @@ model:
 
 training:
   batch_size: 128
-  max_epochs: 100
+  max_epochs: 1
   optimizer:
     name: 'adam'
     lr: 0.0001
@@ -41,8 +41,5 @@ training:
 
 gpu: 1
 
-embedding_projector:
-  version: 6
-  epoch: 9
 
 

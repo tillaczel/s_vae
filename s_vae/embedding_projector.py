@@ -25,11 +25,19 @@ def run(config: dict):
 
     valid_set = DataLoader(valid_set, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
-    embeddings = list()
+    x_data, y_data, embeddings = list(), list(), list()
     for x, y in valid_set:
         x_hat, z = model.forward(x)
+        x_data.append(x)
+        y_data.append(y)
         embeddings.append(z)
-    embeddings = torch.cat(embeddings)
+    x_data, y_data, embeddings = torch.cat(x_data), torch.cat(y_data).detach().numpy(), torch.cat(embeddings)
+
+    if len(x.shape) < 4:
+        label_img = None
+    else:
+        label_img = x_data
 
     writer = torch.utils.tensorboard.writer.SummaryWriter(log_dir=f'{log_dir}/embedding_projector')
-    writer.add_embedding(embeddings)
+    writer.add_embedding(embeddings, metadata=y_data, label_img=label_img)
+

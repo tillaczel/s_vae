@@ -55,5 +55,5 @@ def train(config: dict):
     engine = EngineModule(config)
     trainer.fit(model=engine, train_dataloader=train_loader, val_dataloaders=valid_loader)
 
-    # trainer.test(test_dataloaders=test_loader)
+    trainer.test(test_dataloaders=valid_loader)
 

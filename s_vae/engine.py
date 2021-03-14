@@ -37,11 +37,19 @@ class EngineModule(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         x, y = batch
-        loss_metrics = self.model.step(x)
-        return loss_metrics
+        x_hat, z = self.model.forward(x)
+        return x, y, z, x_hat
 
     def test_epoch_end(self, outputs: list):
-        self.transform_and_log_results(outputs, 'test')
+        x, y, z, x_hat = zip(*outputs)
+        x, y, z = torch.cat(x).cpu(), torch.cat(y).cpu().numpy(), torch.cat(z).cpu()
+
+        if len(x.shape) < 4:
+            label_img = None
+        else:
+            label_img = x
+
+        self.logger.experiment.add_embedding(z, metadata=y, label_img=label_img)
 
     def configure_optimizers(self):
         optimizer = get_optimizer(self.config['training']['optimizer'], self.parameters())
