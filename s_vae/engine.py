@@ -1,7 +1,5 @@
 import pytorch_lightning as pl
 import torch
-from torch import nn
-from torch.nn import functional as F
 
 from s_vae.models import build_model
 
@@ -12,36 +10,35 @@ class EngineModule(pl.LightningModule):
         super().__init__()
         self.model = build_model(config['model'])
 
+    def forward(self, x):
+        return self.model(x)
+
     def training_step(self, batch, batch_idx):
         x, y = batch
-        x = x.view(x.size(0), -1)
-        x_hat = self.model(x)
-        loss = F.mse_loss(x_hat, x)
-        self.log('train_loss', loss)
-        return loss
+        results = self.forward(x)
+        loss_metrics = self.model.loss_function(*results)
+        return loss_metrics
 
     def training_epoch_end(self, outputs: list):
-        pass
+        self.transform_and_log_results(outputs, 'train')
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        x = x.view(x.size(0), -1)
-        x_hat = self.model(x)
-        loss = F.mse_loss(x_hat, x)
-        self.log('val_loss', loss)
+        results = self.forward(x)
+        loss_metrics = self.model.loss_function(*results)
+        return loss_metrics
 
     def validation_epoch_end(self, outputs: list):
-        pass
+        self.transform_and_log_results(outputs, 'valid')
 
     def test_step(self, batch, batch_idx):
         x, y = batch
-        x = x.view(x.size(0), -1)
-        x_hat = self.model(x)
-        loss = F.mse_loss(x_hat, x)
-        self.log('test_loss', loss)
+        results = self.forward(x)
+        loss_metrics = self.model.loss_function(*results)
+        return loss_metrics
 
     def test_epoch_end(self, outputs: list):
-        pass
+        self.transform_and_log_results(outputs, 'test')
 
     def configure_optimizers(self):
         optimizer = get_optimizer(self.config['training']['optimizer'], self.parameters())
@@ -51,6 +48,14 @@ class EngineModule(pl.LightningModule):
             return [optimizer], [scheduler]
         else:
             return optimizer
+
+    def transform_and_log_results(self, outputs, split):
+        loss_metrics = dict()
+        for key in outputs[0].keys():
+            loss_metrics[key] = torch.stack([x[key] for x in outputs]).mean()
+        for key, value in loss_metrics.items():
+            self.log(f'{split}/{key}', value)
+
 
 
 def get_optimizer(optim_config: dict, params):
