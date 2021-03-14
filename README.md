@@ -4,19 +4,19 @@
 [Docker](https://www.docker.com/) <br/>
 [Nvidia drivers](https://www.nvidia.com/Download/index.aspx)
 
-### Build and run Docker
+### Build Docker
 In the terminal navigate to project folder and type:
 ```
 docker build -t s_vae .
-docker run --rm -it --name='training' -v PATH_TO_PROHJECT/s_vae:/s_vae --gpus all s_vae
 ```
-Note you need to replace PATH_TO_PROHJECT with your path.
 
 ## Run training
 ```
+docker run --rm -it --name='training' -v PATH_TO_PROHJECT/s_vae:/s_vae --gpus all s_vae
 cd s_vae/experiment/train
 python run.py 
 ```
+Note you need to replace PATH_TO_PROHJECT with your path.
 
 ## Start TensorBoard
 All the experiment results can be seen in TensorBoard. To start TensorBoard type:
