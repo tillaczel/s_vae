@@ -1,32 +1,33 @@
 experiment:
   name: 'name'
-  save_dir: '../local/logs'
+  save_dir: '../../local/logs'
   seed: 1
 
 data:
-  name: 'synth'  # Options: ['MNIST', 'synth']
-  path: '../local/data'
+  name: 'MNIST'  # Options: ['MNIST', 'synth']
+  path: '../../local/data'
   train_ratio: 0.8
   num_workers: 8
   latent_dim: 3  # Only for synthetic
-  observed_dim: 10  # Only for synthetic
+  observed_dim: 784  # Only for synthetic
   n_dev_samples: 50000  # Only for synthetic
   n_test_samples: 10000  # Only for synthetic
 
 model:
   name: 'vae'
-  latent_dim : 48
+  latent_dim : 16
+  kl_coeff: 0.01
   backbone:
     name: 'linear'  # Options: ['linear', 'conv']
     hidden_dims: !!python/list [32, 64]
-    data_shape: !!python/tuple [10]
+    data_shape: !!python/tuple [1, 28, 28]
 
 training:
-  batch_size: 64
-  max_epochs: 5
+  batch_size: 128
+  max_epochs: 1
   optimizer:
-    name: 'sgd'
-    lr: 0.1
+    name: 'adam'
+    lr: 0.0001
   scheduler:
     name: 'plateau'
     mode: 'min'
@@ -34,7 +35,11 @@ training:
     factor: 0.1
     min_lr: 0.0000001
     monitor: 'train/loss'
+  ckpt_callback:
+    monitor: 'valid/loss'
+    save_top_k: 5
 
 gpu: 1
+
 
 

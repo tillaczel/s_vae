@@ -14,7 +14,8 @@ class AE(nn.Module):
         encoded = self.encoder(x)
         z = self.latent(encoded)
         x_hat = self.decoder(z)
-        return [x, x_hat]
+        return x_hat, z
 
-    def loss_function(self, x, x_hat):
-        return {'loss': F.mse_loss(x_hat, x)}
+    def step(self, x):
+        x_hat, z = self.forward(x)
+        return {'loss': F.mse_loss(x_hat, x, reduction='mean')}

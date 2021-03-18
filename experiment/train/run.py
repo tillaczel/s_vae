@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../')
+sys.path.append('../../')
 
 import yaml
 
@@ -14,6 +14,6 @@ def main(config_path: str):
 
 
 if __name__ == '__main__':
-    config_path = 'config.yaml'
+    config_path = '../config.yaml'
     main(config_path)
 

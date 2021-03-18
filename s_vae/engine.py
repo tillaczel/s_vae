@@ -3,20 +3,25 @@ import torch
 
 from s_vae.models import build_model
 
+
 class EngineModule(pl.LightningModule):
 
     def __init__(self, config: dict):
-        self.config = config
         super().__init__()
+        self.config = config
         self.model = build_model(config['model'])
+
+    @property
+    def lr(self):
+        return self.optimizers().param_groups[0]['lr']
 
     def forward(self, x):
         return self.model(x)
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        results = self.forward(x)
-        loss_metrics = self.model.loss_function(*results)
+        loss_metrics = self.model.step(x)
+        self.log('lr', self.lr, prog_bar=True, on_step=True, logger=False)
         return loss_metrics
 
     def training_epoch_end(self, outputs: list):
@@ -24,8 +29,7 @@ class EngineModule(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        results = self.forward(x)
-        loss_metrics = self.model.loss_function(*results)
+        loss_metrics = self.model.step(x)
         return loss_metrics
 
     def validation_epoch_end(self, outputs: list):
@@ -33,12 +37,19 @@ class EngineModule(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         x, y = batch
-        results = self.forward(x)
-        loss_metrics = self.model.loss_function(*results)
-        return loss_metrics
+        x_hat, z = self.model.forward(x)
+        return x, y, z, x_hat
 
     def test_epoch_end(self, outputs: list):
-        self.transform_and_log_results(outputs, 'test')
+        x, y, z, x_hat = zip(*outputs)
+        x, y, z = torch.cat(x).cpu(), torch.cat(y).cpu().numpy(), torch.cat(z).cpu()
+
+        if len(x.shape) < 4:
+            label_img = None
+        else:
+            label_img = x
+
+        self.logger.experiment.add_embedding(z, metadata=y, label_img=label_img)
 
     def configure_optimizers(self):
         optimizer = get_optimizer(self.config['training']['optimizer'], self.parameters())
@@ -50,12 +61,16 @@ class EngineModule(pl.LightningModule):
             return optimizer
 
     def transform_and_log_results(self, outputs, split):
-        loss_metrics = dict()
+        metrics = dict()
         for key in outputs[0].keys():
-            loss_metrics[key] = torch.stack([x[key] for x in outputs]).mean()
-        for key, value in loss_metrics.items():
-            self.log(f'{split}/{key}', value)
+            metrics[f'{split}/{key}'] = torch.stack([x[key] for x in outputs]).mean()
+        self.logger.log_metrics(metrics, step=self.current_epoch)
 
+        _callback_metrics = [self.config['training']['scheduler']['monitor'],
+                             self.config['training']['ckpt_callback']['monitor']]
+        for _callback_metric in _callback_metrics:
+            if _callback_metric in metrics.keys():
+                self.trainer.logger_connector.callback_metrics[_callback_metric] = metrics[_callback_metric]
 
 
 def get_optimizer(optim_config: dict, params):

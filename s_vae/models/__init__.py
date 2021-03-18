@@ -26,6 +26,7 @@ def build_model(model_config: dict):
     if name == 'ae':
         return AE(encoder, decoder, encoder_out_dim, latent_dim)
     if name == 'vae':
-        return VAE(encoder, decoder, encoder_out_dim, latent_dim)
+        kl_coeff = model_config['kl_coeff']
+        return VAE(encoder, decoder, encoder_out_dim, latent_dim, kl_coeff)
     else:
         raise ValueError(f'{name} not in models')
