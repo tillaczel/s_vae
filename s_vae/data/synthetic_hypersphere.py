@@ -92,10 +92,10 @@ def create_synthetic_hypersphere(path: str, latent_dim, observed_dim, n_dev_samp
         latent_data_dev, latent_data_test = latent_data[:n_dev_samples], latent_data[-n_test_samples:]
         observed_data_dev, observed_data_test = observed_data[:n_dev_samples], observed_data[-n_test_samples:]
 
-        np.savetxt(f'{path}/latent_data_dev_{tag}.csv', latent_data_dev.astype(float), delimiter=',')
-        np.savetxt(f'{path}/latent_data_test_{tag}.csv', latent_data_test.astype(float), delimiter=',')
-        np.savetxt(f'{path}/observed_data_dev_{tag}.csv', observed_data_dev.astype(float), delimiter=',')
-        np.savetxt(f'{path}/observed_data_test_{tag}.csv', observed_data_test.astype(float), delimiter=',')
+        np.savetxt(f'{raw_path}/latent_data_dev_{tag}.csv', latent_data_dev.astype(float), delimiter=',')
+        np.savetxt(f'{raw_path}/latent_data_test_{tag}.csv', latent_data_test.astype(float), delimiter=',')
+        np.savetxt(f'{raw_path}/observed_data_dev_{tag}.csv', observed_data_dev.astype(float), delimiter=',')
+        np.savetxt(f'{raw_path}/observed_data_test_{tag}.csv', observed_data_test.astype(float), delimiter=',')
 
     dataset = SyntheticHypersphereDataset(observed_data_dev)
     train_size = int(train_ratio * len(dataset))

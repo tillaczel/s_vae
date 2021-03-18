@@ -16,7 +16,8 @@ docker run --rm -it --name='training' -v PATH_TO_PROHJECT/s_vae:/s_vae --gpus al
 cd s_vae/experiment/train
 python run.py 
 ```
-Note you need to replace PATH_TO_PROHJECT with your path.
+Note you need to replace PATH_TO_PROHJECT with your path.<br/>
+If you don't have a GPU remove `--gpus all` from the `docker run` command and set `gpu: 0` in the [config file](experiment/config.yaml).
 
 ## Start TensorBoard
 All the experiment results can be seen in TensorBoard. To start TensorBoard type:
