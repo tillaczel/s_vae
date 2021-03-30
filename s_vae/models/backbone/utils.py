@@ -9,7 +9,7 @@ class Reshape(torch.nn.Module):
         return x.view(-1, *self.shape)
 
 
-def sample_hypersphere(n, dim, R = 1):
+def sample_hypersphere(n, dim =3, R = 1, seed = 0):
     """ 
     This function will sample from uniform distribution on the *dim*-dimensional unit sphere. 
     The method used comes from  "Computer Generation of Distributions on
@@ -18,7 +18,8 @@ def sample_hypersphere(n, dim, R = 1):
     dim: the dimension of the sphere.
     R: radius of the sphere
     """
-
+    torch.seed(seed)
+    
     distrib = torch.distributions.MultivariateNormal(torch.zeros(dim), torch.eye(dim))
     dim_arr = torch.empty(dim, n)
 
