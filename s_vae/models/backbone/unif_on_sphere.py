@@ -23,7 +23,7 @@ class UnifOnSphere(Distribution):
     
     @property
     def dim(self):
-        return self.dim
+        return self._dim
 
     @property
     def device(self):
