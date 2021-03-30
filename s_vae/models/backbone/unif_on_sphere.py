@@ -34,6 +34,10 @@ class UnifOnSphere(Distribution):
         self._device = val if isinstance(val, torch.device) else torch.device(val)
 
     def sample(self, sample_shape=torch.Size(), R = 1):
+        """
+        To sample n-observations pass sample_shape = torch.Size((n,)) to the sampling method. 
+        """
+
 
         shape = sample_shape if isinstance(sample_shape, torch.Size) else torch.Size([sample_shape])
         MultNorm = torch.distributions.MultivariateNormal(torch.zeros(self._ndim), torch.eye(self._ndim)).sample(shape).to(self._device)
