@@ -8,7 +8,6 @@ class UnifOnSphere(Distribution):
 
     Args:
     ndim (Number, Tensor): Dimension of the hypersphere   
-    device "cpu"/"gpu": device to have the torch.tensor stored on 
     """
 
     has_rsample = False
