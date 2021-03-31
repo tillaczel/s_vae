@@ -22,7 +22,6 @@ class BesselFunc(torch.autograd.Function):
     
     @staticmethod
     def backward(ctx, grad_out):
-        print()
         kappa, = ctx.saved_tensors
         nu = ctx._nu
         # formula is from Wolfram: https://functions.wolfram.com/Bessel-TypeFunctions/BesselI/20/01/02/0003/
