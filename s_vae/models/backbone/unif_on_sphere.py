@@ -15,33 +15,23 @@ class UnifOnSphere(Distribution):
     support = torch.distributions.constraints.real
     _mean_carrier_measure = 0
 
-    def __init__(self, ndim, device = "cpu"):
+    def __init__(self, ndim):
         super(UnifOnSphere, self).__init__(
             torch.Size([ndim]))
         self._ndim = ndim
-        self._device = device
-    
+
     @property
     def dim(self):
-        return self._dim
+        return self._ndim
 
-    @property
-    def device(self):
-        return self._device
-
-    @device.setter
-    def device(self, val):
-        self._device = val if isinstance(val, torch.device) else torch.device(val)
 
     def sample(self, sample_shape=torch.Size(), R = 1):
         """
         To sample n-observations pass sample_shape = torch.Size((n,)) to the sampling method. 
         """
-
-
         shape = sample_shape if isinstance(sample_shape, torch.Size) else torch.Size([sample_shape])
-        MultNorm = torch.distributions.MultivariateNormal(torch.zeros(self._ndim), torch.eye(self._ndim)).sample(shape).to(self._device)
-        
+        MultNorm = torch.distributions.MultivariateNormal(torch.zeros(self._ndim), torch.eye(self._ndim)).sample(shape)
+
         assert(R>0)
         return (MultNorm*R)/torch.linalg.norm(MultNorm, dim = -1,  ord= 2, keepdim = True)
 
