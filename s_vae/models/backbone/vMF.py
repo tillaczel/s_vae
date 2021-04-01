@@ -82,11 +82,11 @@ class vMF(Distribution):
         The matrix is constructed using the initial unit vector and the mean direction vecor.
         """
 
-        ksi = (torch.Tensor([1.0] + [0] * (mu.shape[-1] - 1)))
+        ksi = (torch.Tensor([1.0] + [0] * (self.ndim - 1)))
         nu = ksi-self.loc
         nu = nu/(torch.linalg.norm(nu,ord =2, dim = -1, keepdim=True)+ 1e-5)
         
-        return torch.eye(mu.shape[-1])- 2*torch.outer(nu,nu)
+        return torch.eye(self.ndim)- 2*torch.outer(nu,nu)
 
 
     def __Reflect(self, x):
