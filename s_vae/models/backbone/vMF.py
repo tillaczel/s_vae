@@ -54,7 +54,7 @@ class vMF(Distribution):
         
         # Init:         
         b = (-2*self.scale + torch.sqrt(4*torch.pow(self.scale,2)+torch.pow(self.ndim-1,2)))/(self.ndim-1)
-        a = ((self.ndim-1)+2*self.scale+torch.sqrt(4*self.scale+torch.pow(self.ndim-1,2)))/4
+        a = ((self.ndim-1)+2*self.scale+torch.sqrt(4*torch.pow(self.scale,2)+torch.pow(self.ndim-1,2)))/4
         d = 4*a*b/(1+b)-(self.ndim-1)*torch.log(self.ndim-1)
 
         # Acceptance/Rejection sampling:
