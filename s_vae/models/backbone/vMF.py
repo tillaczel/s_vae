@@ -129,15 +129,15 @@ def _kl_vmf_uniform(vmf, unisphere):
     return -vmf.entropy() + unisphere.entropy()
 
 
-
-hyp = UnifOnSphere(2)
-
-mu = hyp.sample()
-
-kappa = torch.tensor([2.5])
-
-
-test_vmf = vMF(mu, kappa)
-
-sample = test_vmf.rsample(torch.Size((10,2)))
-print(torch.linalg.norm(sample, ord = 2, dim = -1))
+if __name__ == "__main__":
+    hyp = UnifOnSphere(2)
+    
+    mu = hyp.sample()
+    
+    kappa = torch.tensor([2.5])
+    
+    
+    test_vmf = vMF(mu, kappa)
+    
+    sample = test_vmf.rsample(torch.Size((10,2)))
+    print(torch.linalg.norm(sample, ord = 2, dim = -1))
