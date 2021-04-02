@@ -25,7 +25,7 @@ class vMF(Distribution):
         
         self.loc = mu # The mean direction vector
         self.scale = kappa # The concentration parameter    
-        self.ndim = torch.tensor([mu.shape[-1]],dtype=torch.float64)
+        self.ndim = torch.tensor(mu.shape[-1],dtype=torch.float64)
 
         self.__H = self.__Householder()
 
@@ -38,20 +38,13 @@ class vMF(Distribution):
         shape = sample_shape if isinstance(sample_shape, torch.Size) else torch.Size([sample_shape])
 
         UnifSphere = UnifOnSphere(self.loc.shape[-1]-1)
-        print(shape)
         sample_rslt = torch.empty(shape)
 
         for i in range(shape[0]):
             w = UnifSphere.sample(torch.Size((1,)))
             omega = self.sample_omega()
-
-            w=torch.sqrt(1+torch.pow(omega,2))*w
-            
-            print(omega)
-            print(w)
-            
-            z = torch.cat((omega, w.transpose(0,1)))
-            print(z.shape)
+            w= torch.sqrt((1-torch.pow(omega,2)))*w
+            z = torch.cat((omega, w.view(-1)))
             sample_rslt[i,:] = self.__Reflect(z)
         
         return sample_rslt
@@ -62,15 +55,15 @@ class vMF(Distribution):
         # Init:         
         b = (-2*self.scale + torch.sqrt(4*self.scale+torch.pow(self.ndim-1,2)))/(self.ndim-1)
         a = ((self.ndim-1)+2*self.scale+torch.sqrt(4*self.scale+torch.pow(self.ndim-1,2)))/4
-        d = 4*a*b/(1+b)-(self.scale-1)*torch.log(self.ndim-1)
+        d = 4*a*b/(1+b)-(self.ndim-1)*torch.log(self.ndim-1)
 
         # Acceptance/Rejection sampling:
         while True:
             epsilon = Beta(0.5*(self.ndim-1),0.5*(self.ndim-1)).sample(torch.Size((1,)))
 
-            omega = (1-(1+b)*epsilon)/(1-(1-b)*epsilon)
+            omega = (1-(1+b)*epsilon)/(1+(1-b)*epsilon)
 
-            T = 2*a*b/(1-(1-b)*epsilon)
+            T = 2*a*b/(1+(1-b)*epsilon)
 
             u = Uniform(torch.tensor([0.0]), torch.tensor([1.0])).sample(torch.Size((1,)))
 
@@ -89,7 +82,7 @@ class vMF(Distribution):
 
         ksi = (torch.Tensor([1.0] + [0] * (self.loc.shape[-1] - 1)))
         nu = ksi-self.loc
-        nu = nu/(torch.linalg.norm(nu,ord =2, dim = -1, keepdim=True)+ 1e-5)
+        nu = nu/torch.linalg.norm(nu,ord =2, dim = -1)
         
         return torch.eye(self.loc.shape[-1])- 2*torch.outer(nu,nu)
 
@@ -101,11 +94,6 @@ class vMF(Distribution):
         Args:
         x (Tensor): vector to transform
         """
-        print(self.__H.shape)
-        print(x.view(-1).shape)
-        print(self.__H.dtype)
-        print(x.view(-1).dtype)
-        print(torch.mv(self.__H,x.view(-1).float()))
         return torch.mv(self.__H,x.view(-1).float())
 
 
@@ -140,13 +128,14 @@ class vMF(Distribution):
 def _kl_vmf_uniform(vmf, unisphere):
     return -vmf.entropy() + unisphere.entropy()
 
-hyp = UnifOnSphere(5)
+hyp = UnifOnSphere(4)
 
 mu = hyp.sample()
-kappa = torch.tensor([1.9])
+
+kappa = torch.tensor([2])
 
 
 test_vmf = vMF(mu, kappa)
 
-sample = test_vmf.rsample(torch.Size((100,5)))
-print(torch.linalg.norm(sample, ord = 2, dim = 1))
+sample = test_vmf.rsample(torch.Size((3,4)))
+print(torch.linalg.norm(sample, ord = 2, dim = -1))
