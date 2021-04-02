@@ -53,7 +53,7 @@ class vMF(Distribution):
     def sample_omega(self):
         
         # Init:         
-        b = (-2*self.scale + torch.sqrt(4*self.scale+torch.pow(self.ndim-1,2)))/(self.ndim-1)
+        b = (-2*self.scale + torch.sqrt(4*torch.pow(self.scale,2)+torch.pow(self.ndim-1,2)))/(self.ndim-1)
         a = ((self.ndim-1)+2*self.scale+torch.sqrt(4*self.scale+torch.pow(self.ndim-1,2)))/4
         d = 4*a*b/(1+b)-(self.ndim-1)*torch.log(self.ndim-1)
 
@@ -128,14 +128,16 @@ class vMF(Distribution):
 def _kl_vmf_uniform(vmf, unisphere):
     return -vmf.entropy() + unisphere.entropy()
 
-hyp = UnifOnSphere(4)
+
+
+hyp = UnifOnSphere(2)
 
 mu = hyp.sample()
 
-kappa = torch.tensor([2])
+kappa = torch.tensor([2.5])
 
 
 test_vmf = vMF(mu, kappa)
 
-sample = test_vmf.rsample(torch.Size((3,4)))
+sample = test_vmf.rsample(torch.Size((10,2)))
 print(torch.linalg.norm(sample, ord = 2, dim = -1))
