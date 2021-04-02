@@ -1,10 +1,11 @@
 import torch 
 import math
 from torch.distributions.distribution import Distribution
-from torch.distributions.distribution.beta import Beta
-from torch.distributions.distribution.uniform import Uniform
-from s_vae.models.backbone.BesselFunc import Bessel
-from s_vae.models.backbone.unif_on_sphere import UnifOnSphere
+from torch.distributions.beta import Beta
+from torch.distributions.uniform import Uniform
+from torch.distributions.kl import register_kl
+from BesselFunc import Bessel
+from unif_on_sphere import UnifOnSphere
 
 class vMF(Distribution):
     """
@@ -14,8 +15,8 @@ class vMF(Distribution):
     mu (Number, Tensor): Mean direction of the distribution
     kappa (Number, Tensor): Concentration parameter 
     """
-    arg_constraints = {'mu': torch.constraints.real_vector,
-                       'kappa': torch.constraints.positive}
+    arg_constraints = {'mu': torch.distributions.constraints.real_vector,
+                       'kappa': torch.distributions.constraints.positive}
 
     support = torch.distributions.constraints.real_vector
     has_rsample = True
@@ -24,7 +25,7 @@ class vMF(Distribution):
         
         self.loc = mu # The mean direction vector
         self.scale = kappa # The concentration parameter    
-        self.ndim = mu.shape[-1]
+        self.ndim = torch.tensor([mu.shape[-1]],dtype=torch.float64)
 
         self.__H = self.__Householder()
 
@@ -36,8 +37,8 @@ class vMF(Distribution):
         
         shape = sample_shape if isinstance(sample_shape, torch.Size) else torch.Size([sample_shape])
 
-        UnifSphere = UnifOnSphere(self.ndim-1)
-        
+        UnifSphere = UnifOnSphere(self.loc.shape[-1]-1)
+        print(shape)
         sample_rslt = torch.empty(shape)
 
         for i in range(shape[0]):
@@ -45,8 +46,12 @@ class vMF(Distribution):
             omega = self.sample_omega()
 
             w=torch.sqrt(1+torch.pow(omega,2))*w
-            z = torch.cat(omega, w)
-
+            
+            print(omega)
+            print(w)
+            
+            z = torch.cat((omega, w.transpose(0,1)))
+            print(z.shape)
             sample_rslt[i,:] = self.__Reflect(z)
         
         return sample_rslt
@@ -61,15 +66,15 @@ class vMF(Distribution):
 
         # Acceptance/Rejection sampling:
         while True:
-            epsilon = Beta(0.5*(self.ndim-1),0.5*(self.ndim-1))
+            epsilon = Beta(0.5*(self.ndim-1),0.5*(self.ndim-1)).sample(torch.Size((1,)))
 
             omega = (1-(1+b)*epsilon)/(1-(1-b)*epsilon)
 
             T = 2*a*b/(1-(1-b)*epsilon)
 
-            u = Uniform(torch.tensor([0.0]), torch.tensor([1.0]))
+            u = Uniform(torch.tensor([0.0]), torch.tensor([1.0])).sample(torch.Size((1,)))
 
-            if (self.ndim-1)*torch.log(T)-T+d >= torch.log(u)
+            if (self.ndim-1)*torch.log(T)-T+d >= torch.log(u):
                 break
         
         return omega
@@ -82,11 +87,11 @@ class vMF(Distribution):
         The matrix is constructed using the initial unit vector and the mean direction vecor.
         """
 
-        ksi = (torch.Tensor([1.0] + [0] * (self.ndim - 1)))
+        ksi = (torch.Tensor([1.0] + [0] * (self.loc.shape[-1] - 1)))
         nu = ksi-self.loc
         nu = nu/(torch.linalg.norm(nu,ord =2, dim = -1, keepdim=True)+ 1e-5)
         
-        return torch.eye(self.ndim)- 2*torch.outer(nu,nu)
+        return torch.eye(self.loc.shape[-1])- 2*torch.outer(nu,nu)
 
 
     def __Reflect(self, x):
@@ -96,7 +101,12 @@ class vMF(Distribution):
         Args:
         x (Tensor): vector to transform
         """
-        return torch.mv(self.__H,x)
+        print(self.__H.shape)
+        print(x.view(-1).shape)
+        print(self.__H.dtype)
+        print(x.view(-1).dtype)
+        print(torch.mv(self.__H,x.view(-1).float()))
+        return torch.mv(self.__H,x.view(-1).float())
 
 
     def entropy(self):
@@ -129,3 +139,14 @@ class vMF(Distribution):
 @register_kl(vMF, UnifOnSphere)
 def _kl_vmf_uniform(vmf, unisphere):
     return -vmf.entropy() + unisphere.entropy()
+
+hyp = UnifOnSphere(5)
+
+mu = hyp.sample()
+kappa = torch.tensor([1.9])
+
+
+test_vmf = vMF(mu, kappa)
+
+sample = test_vmf.rsample(torch.Size((100,5)))
+print(torch.linalg.norm(sample, ord = 2, dim = 1))
