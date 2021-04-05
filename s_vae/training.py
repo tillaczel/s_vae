@@ -24,11 +24,11 @@ def create_data_loaders(config: dict):
     batch_size = config['training'].get('batch_size', 32)
     num_workers = config['data'].get('num_workers', 1)
 
-    train_set = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-    valid_set = DataLoader(valid_set, batch_size=batch_size, shuffle=False, num_workers=num_workers)
-    test_set = DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+    valid_loader = DataLoader(valid_set, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
-    return train_set, valid_set, test_set
+    return train_loader, valid_loader, test_loader
 
 
 def create_trainer(config: dict):

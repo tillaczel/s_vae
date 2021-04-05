@@ -1,7 +1,11 @@
 import pytorch_lightning as pl
 import torch
+import os
+from PIL import Image
+import numpy as np
 
 from s_vae.models import build_model
+from s_vae.data import dataset_vis_factory
 
 
 class EngineModule(pl.LightningModule):
@@ -10,6 +14,8 @@ class EngineModule(pl.LightningModule):
         super().__init__()
         self.config = config
         self.model = build_model(config['model'])
+
+        self.data_vis = dataset_vis_factory(config['data']['name'])
 
     @property
     def lr(self):
@@ -42,8 +48,14 @@ class EngineModule(pl.LightningModule):
 
     def test_epoch_end(self, outputs: list):
         x, y, z, x_hat = zip(*outputs)
-        x, y, z = torch.cat(x).cpu(), torch.cat(y).cpu().numpy(), torch.cat(z).cpu()
+        x, y, z, x_hat = torch.cat(x).cpu(), torch.cat(y).cpu().numpy(), torch.cat(z).cpu(), torch.cat(x_hat).cpu()
 
+        if self.data_vis is not None:
+            fig_path = self.data_vis(os.path.join(self.logger.experiment.log_dir, 'figs'), x, x_hat)
+            _img = np.array(Image.open(fig_path).convert('RGB'))
+            self.logger.experiment.add_image('Reconstruction', _img, dataformats='HWC')
+
+        # Check if data is image
         if len(x.shape) < 4:
             label_img = None
         else:
