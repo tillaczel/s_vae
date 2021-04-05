@@ -1,4 +1,4 @@
-from s_vae.data.mnist import create_MNIST
+from s_vae.data.mnist import create_MNIST, vis_mnist
 from s_vae.data.synthetic_hypersphere import create_synthetic_hypersphere
 
 
@@ -16,6 +16,15 @@ def create_dataset(data_config: dict, seed=0):
         n_test_samples = data_config['n_test_samples']
         return create_synthetic_hypersphere(path, latent_dim, observed_dim, n_dev_samples, n_test_samples, train_ratio,
                                             seed=seed)
+    else:
+        raise ValueError(f'{name} is not in datasets')
+
+
+def dataset_vis_factory(name):
+    if name == 'MNIST':
+        return vis_mnist
+    elif name == 'synth':
+        return None
     else:
         raise ValueError(f'{name} is not in datasets')
 
