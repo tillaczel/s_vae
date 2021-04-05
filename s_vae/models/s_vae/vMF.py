@@ -106,19 +106,11 @@ class vMF(Distribution):
 
         return output.view(*(output.shape[:-1])) + self._log_normalization()
 
-    def log_prob(self, x):
-        return self._log_unnormalized_prob(x) - self._log_normalization()
-
-    def _log_unnormalized_prob(self, x):
-        output = self.scale * (self.loc * x).sum(-1, keepdim=True)
-
-        return output.view(*(output.shape[:-1]))
-
     def _log_normalization(self):
         output = -(
             (self.ndim/ 2 - 1) * torch.log(self.scale)
             - (self.ndim/ 2) * math.log(2 * math.pi)
-            - (self.scale + torch.log(Bessel(self.ndim/ 2 - 1, self.scale)))
+            - torch.log(Bessel(self.ndim/ 2 - 1, self.scale))
         )
 
         return output.view(*(output.shape[:-1]))
