@@ -26,14 +26,14 @@ class vMF(Distribution):
         self.loc = mu # The mean direction vector
         self.scale = kappa # The concentration parameter    
         self.ndim = torch.tensor(mu.shape[-1],dtype=torch.float64)
-        
+
+
         super().__init__(self.loc.size(), validate_args=validate_args)
 
 
 
     def rsample(self, sample_shape= torch.Size()):
-        if sample_shape is None:
-            sample_shape = torch.Size((self.loc.shape))
+        
         shape = sample_shape if isinstance(sample_shape, torch.Size) else torch.Size([sample_shape])
 
         sample_rslt = torch.empty(shape)
@@ -122,6 +122,7 @@ class vMF(Distribution):
         Args:
         x (Tensor): vector to transform
         """
+
         return torch.mv(H,x.view(-1).float())
 
 

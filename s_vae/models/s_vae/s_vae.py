@@ -56,7 +56,6 @@ class SVAE(nn.Module):
 
         p = UnifOnSphere(self.latent_dim)
         q = vMF(mu, kappa)
-        z = q.rsample()
+        z = q.rsample(sample_shape = mu.shape)
 
         return p, q, z
-
