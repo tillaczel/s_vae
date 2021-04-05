@@ -6,10 +6,9 @@ from torch.distributions.uniform import Uniform
 from torch.distributions.kl import register_kl
 from s_vae.models.s_vae.BesselFunc import Bessel
 from s_vae.models.s_vae.unif_on_sphere import UnifOnSphere
-from torch import nn
 
 
-class vMF(Distribution, nn.Module):
+class vMF(Distribution):
     """
     Creates a von Mises-Fisher distribution on a m-dimensional hypersphere
 
@@ -23,18 +22,15 @@ class vMF(Distribution, nn.Module):
     support = torch.distributions.constraints.real_vector
     has_rsample = True
 
-    def __init__(self, mu, kappa, device, validate_args=None):
+    def __init__(self, mu, kappa, validate_args=None):
         
-        self.loc = mu # The mean direction vector
-        self.scale = kappa # The concentration parameter    
-        self.ndim = torch.tensor(mu.shape[-1],dtype=torch.float64)
-        self.device = device
+        self.loc = mu  # The mean direction vector
+        self.scale = kappa  # The concentration parameter
+        self.ndim = torch.tensor(mu.shape[-1], dtype=torch.float64)
 
-        self.__H = self.__Householder(device)
+        self.__H = self.__Householder()
 
         super().__init__(self.loc.size(), validate_args=validate_args)
-
-
 
     def rsample(self, sample_shape= torch.Size()):
         
@@ -46,23 +42,22 @@ class vMF(Distribution, nn.Module):
         for i in range(shape[0]):
             w = UnifSphere.sample(torch.Size((1,)))
             omega = self.sample_omega()
-            w= torch.sqrt((1-torch.pow(omega,2)))*w
+            w= torch.sqrt((1-torch.pow(omega, 2)))*w
             z = torch.cat((omega, w.view(-1)))
-            sample_rslt[i,:] = self.__Reflect(z)
+            sample_rslt[i, :] = self.__Reflect(z)
         
         return sample_rslt
-
 
     def sample_omega(self):
         
         # Init:         
-        b = (-2*self.scale + torch.sqrt(4*torch.pow(self.scale,2)+torch.pow(self.ndim-1,2)))/(self.ndim-1)
-        a = ((self.ndim-1)+2*self.scale+torch.sqrt(4*torch.pow(self.scale,2)+torch.pow(self.ndim-1,2)))/4
+        b = (-2*self.scale + torch.sqrt(4*torch.pow(self.scale, 2)+torch.pow(self.ndim-1, 2)))/(self.ndim-1)
+        a = ((self.ndim-1)+2*self.scale+torch.sqrt(4*torch.pow(self.scale, 2)+torch.pow(self.ndim-1, 2)))/4
         d = 4*a*b/(1+b)-(self.ndim-1)*torch.log(self.ndim-1)
 
         # Acceptance/Rejection sampling:
         while True:
-            epsilon = Beta(0.5*(self.ndim-1),0.5*(self.ndim-1)).sample(torch.Size((1,)))
+            epsilon = Beta(0.5*(self.ndim-1), 0.5*(self.ndim-1)).sample(torch.Size((1,)))
 
             omega = (1-(1+b)*epsilon)/(1+(1-b)*epsilon)
 
@@ -75,25 +70,17 @@ class vMF(Distribution, nn.Module):
         
         return omega
 
-
-    def __Householder(self, device):
+    def __Householder(self):
         """
         Defines the Householder transformation matrix H. 
 
-        The matrix is constructed using the initial unit vector and the mean direction vecor.
+        The matrix is constructed using the initial unit vector and the mean direction vector.
         """
-        # Todo: device
-        print(torch.Tensor([1.0]).device)
-        ksi = (torch.Tensor([1.0] + [0] * (self.loc.shape[-1] - 1))).to(device)
-        print(self.device)
-        print(ksi.device, self.loc.device)
+        ksi = (torch.Tensor([1.0] + [0] * (self.loc.shape[-1] - 1))).to(self.loc.device)
         nu = ksi-self.loc
-        print(nu.shape, torch.linalg.norm(nu, ord =2, dim = -1).shape)
-        nu = nu/torch.linalg.norm(nu, ord =2, dim = -1)
+        nu = nu/torch.linalg.norm(nu, ord=2, dim=-1, keepdim=True)
 
-        print(nu.shape)
-        return torch.eye(self.loc.shape[-1])- 2*torch.outer(nu,nu)
-
+        return torch.eye(self.loc.shape[-1])-2*torch.outer(nu, nu)
 
     def __Reflect(self, x):
         """
@@ -104,12 +91,11 @@ class vMF(Distribution, nn.Module):
         """
         return torch.mv(self.__H,x.view(-1).float())
 
-
     def entropy(self):
         output = (
             -self.scale
-            * Bessel(self.ndim/ 2, self.scale)
-            / Bessel((self.ndim/ 2) - 1, self.scale)
+            * Bessel(self.ndim/2, self.scale)
+            / Bessel((self.ndim/2)-1, self.scale)
         )
 
         return output.view(*(output.shape[:-1])) + self._log_normalization()
@@ -118,7 +104,7 @@ class vMF(Distribution, nn.Module):
         output = -(
             (self.ndim/ 2 - 1) * torch.log(self.scale)
             - (self.ndim/ 2) * math.log(2 * math.pi)
-            - torch.log(Bessel(self.ndim/ 2 - 1, self.scale))
+            - torch.log(Bessel(self.ndim/2-1, self.scale))
         )
 
         return output.view(*(output.shape[:-1]))
@@ -135,8 +121,7 @@ if __name__ == "__main__":
     mu = hyp.sample()
     
     kappa = torch.tensor([2.5])
-    
-    
+
     test_vmf = vMF(mu, kappa)
     
     sample = test_vmf.rsample(torch.Size((10,2)))
