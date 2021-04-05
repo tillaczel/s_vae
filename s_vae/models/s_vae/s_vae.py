@@ -1,8 +1,8 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
-from unif_on_sphere import  UnifOnSphere
-from vMF import vMF
+from s_vae.models.s_vae.unif_on_sphere import UnifOnSphere
+from s_vae.models.s_vae.vMF import vMF
 
 class SVAE(nn.Module):
     def __init__(self, encoder: nn.Module, decoder: nn.Module, encoder_out_dim: int, latent_dim: int, kl_coeff: float):
@@ -30,9 +30,9 @@ class SVAE(nn.Module):
         reconstructed = self.decoder(z)
         return reconstructed
 
-    def _forward(self, x):
+    def _forward(self, x, device):
         mu, kappa = self.encode(x)
-        p, q, z = self.sample(mu, kappa)
+        p, q, z = self.sample(mu, kappa, device)
         x_hat = self.decode(z)
         return x_hat, mu, kappa, p, q, z
 
@@ -40,8 +40,8 @@ class SVAE(nn.Module):
         x_hat, mu, log_var, p, q, z = self._forward(x)
         return x_hat, z
 
-    def step(self, x):
-        x_hat, mu, kappa, p, q, z = self._forward(x)
+    def step(self, x, device):
+        x_hat, mu, kappa, p, q, z = self._forward(x, device)
 
         loss_recon = F.mse_loss(x_hat, x, reduction='mean')
 
@@ -52,10 +52,10 @@ class SVAE(nn.Module):
         return {'loss': loss, 'loss_recon': loss_recon, 'loss_kl': loss_kl}
 
 
-    def sample(self, mu, kappa):
+    def sample(self, mu, kappa, device):
 
         p = UnifOnSphere(self.latent_dim)
-        q = vMF(mu, kappa)
+        q = vMF(mu, kappa, device)
         z = q.rsample()
 
         return p, q, z

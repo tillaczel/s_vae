@@ -4,10 +4,12 @@ from torch.distributions.distribution import Distribution
 from torch.distributions.beta import Beta
 from torch.distributions.uniform import Uniform
 from torch.distributions.kl import register_kl
-from BesselFunc import Bessel
-from unif_on_sphere import UnifOnSphere
+from s_vae.models.s_vae.BesselFunc import Bessel
+from s_vae.models.s_vae.unif_on_sphere import UnifOnSphere
+from torch import nn
 
-class vMF(Distribution):
+
+class vMF(Distribution, nn.Module):
     """
     Creates a von Mises-Fisher distribution on a m-dimensional hypersphere
 
@@ -21,13 +23,14 @@ class vMF(Distribution):
     support = torch.distributions.constraints.real_vector
     has_rsample = True
 
-    def __init__(self, mu, kappa, validate_args=None):
+    def __init__(self, mu, kappa, device, validate_args=None):
         
         self.loc = mu # The mean direction vector
         self.scale = kappa # The concentration parameter    
         self.ndim = torch.tensor(mu.shape[-1],dtype=torch.float64)
+        self.device = device
 
-        self.__H = self.__Householder()
+        self.__H = self.__Householder(device)
 
         super().__init__(self.loc.size(), validate_args=validate_args)
 
@@ -73,17 +76,22 @@ class vMF(Distribution):
         return omega
 
 
-    def __Householder(self):
+    def __Householder(self, device):
         """
         Defines the Householder transformation matrix H. 
 
         The matrix is constructed using the initial unit vector and the mean direction vecor.
         """
-
-        ksi = (torch.Tensor([1.0] + [0] * (self.loc.shape[-1] - 1)))
+        # Todo: device
+        print(torch.Tensor([1.0]).device)
+        ksi = (torch.Tensor([1.0] + [0] * (self.loc.shape[-1] - 1))).to(device)
+        print(self.device)
+        print(ksi.device, self.loc.device)
         nu = ksi-self.loc
-        nu = nu/torch.linalg.norm(nu,ord =2, dim = -1)
-        
+        print(nu.shape, torch.linalg.norm(nu, ord =2, dim = -1).shape)
+        nu = nu/torch.linalg.norm(nu, ord =2, dim = -1)
+
+        print(nu.shape)
         return torch.eye(self.loc.shape[-1])- 2*torch.outer(nu,nu)
 
 

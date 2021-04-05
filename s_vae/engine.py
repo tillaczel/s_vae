@@ -26,7 +26,7 @@ class EngineModule(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        loss_metrics = self.model.step(x)
+        loss_metrics = self.model.step(x, device=self.device)
         self.log('lr', self.lr, prog_bar=True, on_step=True, logger=False)
         return loss_metrics
 
@@ -35,7 +35,7 @@ class EngineModule(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        loss_metrics = self.model.step(x)
+        loss_metrics = self.model.step(x, device=self.device)
         return loss_metrics
 
     def validation_epoch_end(self, outputs: list):
