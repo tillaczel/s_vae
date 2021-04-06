@@ -4,8 +4,8 @@ from torch.distributions.distribution import Distribution
 from torch.distributions.beta import Beta
 from torch.distributions.uniform import Uniform
 from torch.distributions.kl import register_kl
-from BesselFunc import Bessel
-from unif_on_sphere import UnifOnSphere
+from s_vae.models.s_vae.BesselFunc import Bessel
+from s_vae.models.s_vae.unif_on_sphere import UnifOnSphere
 
 class vMF(Distribution):
     """
@@ -81,9 +81,9 @@ class vMF(Distribution):
 
             epsilon = Beta(0.5*(self.ndim-1),0.5*(self.ndim-1)).sample(torch.Size((number_rejected,)))
 
-            _omega[indx_rejected] = (1-(1+_b)*epsilon)/(1+(1-_b)*epsilon).view(-1)
+            _omega[indx_rejected] = (1-(1+_b)*epsilon)/(1-(1-_b)*epsilon).view(-1)
 
-            T = 2*_a*_b/(1+(1-_b)*epsilon)
+            T = 2*_a*_b/(1-(1-_b)*epsilon)
 
             u = Uniform(torch.tensor([0.0]), torch.tensor([1.0])).sample(torch.Size((number_rejected,)))
 
