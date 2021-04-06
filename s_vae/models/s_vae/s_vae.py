@@ -15,14 +15,14 @@ class SVAE(nn.Module):
 
         self.fc_mu = nn.Linear(encoder_out_dim, latent_dim)
         self.fc_kappa = nn.Linear(encoder_out_dim, 1)  # concentration parameter is just a scalar
-
+        
     def encode(self, x):
         encoded = self.encoder(x)
 
         mu = self.fc_mu(encoded)
         mu = mu/torch.linalg.norm(mu, ord=2, keepdim=True, dim=-1)  # make mu a vector on the sphere
 
-        kappa = self.fc_kappa(encoded)
+        kappa = F.softplus(self.fc_kappa(encoded)) + 1
 
         return mu, kappa
 

@@ -35,5 +35,5 @@ class UnifOnSphere(Distribution):
         return (MultNorm*R)/torch.linalg.norm(MultNorm, dim = -1,  ord= 2, keepdim = True)
 
     def entropy(self):
-        lgamma = torch.lgamma(torch.tensor([(self._ndim + 1) / 2]).to(self.device))
+        lgamma = torch.lgamma(torch.tensor([(self._ndim + 1) / 2]))
         return math.log(2) + ((self._ndim + 1) / 2) * math.log(math.pi) - lgamma

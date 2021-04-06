@@ -4,6 +4,8 @@ from torch.distributions.distribution import Distribution
 from torch.distributions.beta import Beta
 from torch.distributions.uniform import Uniform
 from torch.distributions.kl import register_kl
+#from BesselFunc import Bessel
+#from unif_on_sphere import UnifOnSphere
 from s_vae.models.s_vae.BesselFunc import Bessel
 from s_vae.models.s_vae.unif_on_sphere import UnifOnSphere
 
@@ -24,7 +26,7 @@ class vMF(Distribution):
     def __init__(self, mu, kappa, validate_args=None):
         
         self.loc = mu # The mean direction vector
-        self.scale = kappa # The concentration parameter    
+        self.scale = kappa.squeeze(dim = 1) # The concentration parameter    
         self.ndim = torch.tensor(mu.shape[-1],dtype=torch.float64)
 
 
@@ -61,7 +63,7 @@ class vMF(Distribution):
 
 
     def sample_omega(self,sample_shape):
-        
+
         # Init:      
         b = (-2*self.scale + torch.sqrt(4*torch.pow(self.scale,2)+torch.pow(self.ndim-1,2)))/(self.ndim-1)
         a = ((self.ndim-1)+2*self.scale+torch.sqrt(4*torch.pow(self.scale,2)+torch.pow(self.ndim-1,2)))/4
@@ -69,19 +71,21 @@ class vMF(Distribution):
 
         # Acceptance/Rejection sampling:
         accpt = torch.zeros_like(b,dtype=torch.bool)
-        indx_rejected = (accpt == 0).nonzero(as_tuple=False).view(-1)
-        indx_accepted = (accpt == 1).nonzero(as_tuple=False).view(-1)
+
+        indx_rejected = (accpt == 0).nonzero(as_tuple=False)[:,0]
+        indx_accepted = (accpt == 1).nonzero(as_tuple=False)[:,0]
         number_rejected = (accpt == 0).count_nonzero()
         omega = torch.empty(size = (sample_shape[0],1), dtype=torch.float64).view(-1)
         _omega = torch.empty(size = (sample_shape[0],1), dtype=torch.float64).view(-1)
         while True:
+
             _a = a[indx_rejected]
             _b = b[indx_rejected]
             _d = d[indx_rejected]
 
             epsilon = Beta(0.5*(self.ndim-1),0.5*(self.ndim-1)).sample(torch.Size((number_rejected,)))
 
-            _omega[indx_rejected] = (1-(1+_b)*epsilon)/(1-(1-_b)*epsilon).view(-1)
+            _omega[indx_rejected] = ((1-(1+_b)*epsilon)/(1-(1-_b)*epsilon))
 
             T = 2*_a*_b/(1-(1-_b)*epsilon)
 
@@ -89,8 +93,8 @@ class vMF(Distribution):
 
             accpt[indx_rejected] = (self.ndim-1)*torch.log(T)-T+_d >= torch.log(u).view(-1)
 
-            indx_rejected = (accpt == 0).nonzero(as_tuple=False).view(-1)
-            indx_accepted = (accpt == 1).nonzero(as_tuple=False).view(-1)
+            indx_rejected = (accpt == 0).nonzero(as_tuple=False)[:,0]
+            indx_accepted = (accpt == 1).nonzero(as_tuple=False)[:,0]
 
             omega[indx_accepted] = _omega[indx_accepted]
             number_rejected = (accpt == 0).count_nonzero()
@@ -132,8 +136,8 @@ class vMF(Distribution):
             * Bessel(self.ndim/ 2, self.scale)
             / Bessel((self.ndim/ 2) - 1, self.scale)
         )
-
-        return output.view(*(output.shape[:-1])) + self._log_normalization()
+        
+        return output+ self._log_normalization()
 
     def _log_normalization(self):
         output = -(
@@ -141,8 +145,7 @@ class vMF(Distribution):
             - (self.ndim/ 2) * math.log(2 * math.pi)
             - torch.log(Bessel(self.ndim/ 2 - 1, self.scale))
         )
-
-        return output.view(*(output.shape[:-1]))
+        return output
 
 
 @register_kl(vMF, UnifOnSphere)
@@ -156,6 +159,7 @@ if __name__ == "__main__":
     mu = hyp.sample(torch.Size((5,)))
     print(mu)
     kappa = torch.tensor([2.5]*5)
+    kappa = kappa[:,None]
     print(kappa)
     
     test_vmf = vMF(mu, kappa)
