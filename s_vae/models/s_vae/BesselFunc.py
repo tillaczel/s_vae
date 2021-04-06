@@ -12,13 +12,13 @@ class BesselFunc(torch.autograd.Function):
         # Save for the backward pass
         ctx._nu = nu
         ctx.save_for_backward(kappa)
-        
+
         if math.isclose(nu, 0.0):
-            return torch.from_numpy(scipy.special.i0(kappa.detach().numpy()))
+            return torch.from_numpy(scipy.special.i0e(kappa.detach().numpy()))
         elif math.isclose(nu, 1.0):
-            return torch.from_numpy(scipy.special.i1(kappa.detach().numpy()))
+            return torch.from_numpy(scipy.special.i1e(kappa.detach().numpy()))
         else:
-            return torch.from_numpy(scipy.special.iv(nu.detach().numpy(), kappa.detach().numpy()))
+            return torch.from_numpy(scipy.special.ive(nu.detach().numpy(), kappa.detach().numpy()))
     
     @staticmethod
     def backward(ctx, grad_out):

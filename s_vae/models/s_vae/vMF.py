@@ -4,8 +4,6 @@ from torch.distributions.distribution import Distribution
 from torch.distributions.beta import Beta
 from torch.distributions.uniform import Uniform
 from torch.distributions.kl import register_kl
-#from BesselFunc import Bessel
-#from unif_on_sphere import UnifOnSphere
 from s_vae.models.s_vae.BesselFunc import Bessel
 from s_vae.models.s_vae.unif_on_sphere import UnifOnSphere
 
@@ -132,7 +130,7 @@ class vMF(Distribution):
 
     def entropy(self):
         output = (
-            -self.scale
+            self.scale
             * Bessel(self.ndim/ 2, self.scale)
             / Bessel((self.ndim/ 2) - 1, self.scale)
         )
@@ -140,7 +138,7 @@ class vMF(Distribution):
         return output+ self._log_normalization()
 
     def _log_normalization(self):
-        output = -(
+        output = (
             (self.ndim/ 2 - 1) * torch.log(self.scale)
             - (self.ndim/ 2) * math.log(2 * math.pi)
             - torch.log(Bessel(self.ndim/ 2 - 1, self.scale))
@@ -150,7 +148,7 @@ class vMF(Distribution):
 
 @register_kl(vMF, UnifOnSphere)
 def _kl_vmf_uniform(vmf, unisphere):
-    return -vmf.entropy() + unisphere.entropy()
+    return vmf.entropy() + unisphere.entropy()
 
 
 if __name__ == "__main__":
