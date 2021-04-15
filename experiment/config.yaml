@@ -24,7 +24,7 @@ model:
 
 training:
   batch_size: 128
-  max_epochs: 10
+  max_epochs: 100
   optimizer:
     name: 'adam'
     lr: 0.0001
@@ -39,7 +39,7 @@ training:
     monitor: 'valid/loss'
     save_top_k: 5
 
-gpu: 0
+gpu: 1
 
 continuity:
   checkpoint_path: '../../local/logs/name/version_0/checkpoints/epoch=9.ckpt'
