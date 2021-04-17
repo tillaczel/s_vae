@@ -13,7 +13,7 @@ class EngineModule(pl.LightningModule):
     def __init__(self, config: dict):
         super().__init__()
         self.config = config
-        self.model = build_model(config['model'])
+        self.model = build_model(config['model'], lambda: self.device)
 
         self.data_vis = dataset_vis_factory(config['data']['name'])
 

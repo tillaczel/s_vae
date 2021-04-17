@@ -1,0 +1,1 @@
+from s_vae.models.s_vae.s_vae import SVAE
