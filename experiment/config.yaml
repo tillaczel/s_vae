@@ -14,8 +14,8 @@ data:
   n_test_samples: 10000  # Only for synthetic
 
 model:
-  name: 'vae'
-  latent_dim: 128
+  name: 's_vae'
+  latent_dim: 3
   kl_coeff: 0
   backbone:
     name: 'linear'  # Options: ['linear', 'conv']
