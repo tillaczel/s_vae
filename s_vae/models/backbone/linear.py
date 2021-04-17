@@ -11,14 +11,10 @@ def linear_encoder(in_dim, hidden_dims):
     in_dim = np.prod(np.array(in_dim))
 
     for h_dim in hidden_dims:
-        modules.append(
-            nn.Sequential(
-                nn.Linear(in_features=in_dim,
-                          out_features=h_dim),
-                nn.LeakyReLU())
-        )
+        modules.append(nn.Linear(in_features=in_dim, out_features=h_dim))
+        modules.append(nn.LeakyReLU())
         in_dim = h_dim
-
+    modules = modules[:-1]
     encoder = nn.Sequential(*modules)
     return encoder, hidden_dims[-1]
 

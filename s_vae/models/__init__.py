@@ -1,5 +1,6 @@
 from s_vae.models.ae import AE
 from s_vae.models.vae import VAE
+from s_vae.models.s_vae import SVAE
 from s_vae.models.backbone.linear import linear_encoder, linear_decoder
 from s_vae.models.backbone.conv import conv_encoder, conv_decoder
 
