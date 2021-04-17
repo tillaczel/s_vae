@@ -1,6 +1,5 @@
 from s_vae.models.ae import AE
 from s_vae.models.vae import VAE
-from s_vae.models.s_vae import SVAE
 from s_vae.models.backbone.linear import linear_encoder, linear_decoder
 from s_vae.models.backbone.conv import conv_encoder, conv_decoder
 
@@ -13,7 +12,6 @@ def build_backbone(model_config: dict):
     if name == 'linear':
         return *linear_encoder(data_shape, hidden_dims), linear_decoder(latent_dim, hidden_dims[::-1], data_shape)
     elif name == 'conv':
-        # Todo: it's not working yet
         return *conv_encoder(data_shape, hidden_dims), conv_decoder(latent_dim, hidden_dims[::-1], data_shape)
     else:
         raise ValueError(f'{name} not in models')
