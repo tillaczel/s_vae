@@ -15,7 +15,7 @@ data:
 
 model:
   name: 'vae'
-  latent_dim : 16
+  latent_dim : 128
   kl_coeff: 0.01
   backbone:
     name: 'linear'  # Options: ['linear', 'conv']
@@ -40,6 +40,9 @@ training:
     save_top_k: 5
 
 gpu: 1
+
+continuity:
+  checkpoint_path: '../../local/logs/name/version_0/checkpoints/epoch=9.ckpt'
 
 
 
