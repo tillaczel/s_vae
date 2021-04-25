@@ -1,2 +1,2 @@
 pytorch-lightning==1.2.2
-test-tube
+test-tube==0.7.5
