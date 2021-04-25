@@ -14,7 +14,7 @@ data:
   n_test_samples: 10000  # Only for synthetic
 
 model:
-  name: 'vae'
+  name: 's_vae'
   latent_dim: 3
   kl_coeff: 0
   backbone:
@@ -39,7 +39,7 @@ training:
     monitor: 'valid/loss'
     save_top_k: 5
 
-gpu: 0
+gpu: 1
 
 
 
