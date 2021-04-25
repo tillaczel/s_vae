@@ -19,7 +19,7 @@ def build_backbone(model_config: dict):
 
 
 def build_model(model_config: dict, device):
-    encoder, encoder_out_dim, decoder = build_backbone(model_config)
+    encoder, encoder_out_dim, decoder, decoder_out_dim, recon_shape = build_backbone(model_config)
 
     name = model_config['name']
     latent_dim = model_config['latent_dim']
@@ -27,9 +27,9 @@ def build_model(model_config: dict, device):
         return AE(encoder, decoder, encoder_out_dim, latent_dim)
     elif name == 'vae':
         kl_coeff = model_config['kl_coeff']
-        return VAE(encoder, decoder, encoder_out_dim, latent_dim, kl_coeff)
+        return VAE(encoder, decoder, encoder_out_dim, decoder_out_dim, recon_shape, latent_dim, kl_coeff)
     elif name == 's_vae':
         kl_coeff = model_config['kl_coeff']
-        return SVAE(encoder, decoder, encoder_out_dim, latent_dim, kl_coeff, device)
+        return SVAE(encoder, decoder, encoder_out_dim, decoder_out_dim, recon_shape, latent_dim, kl_coeff, device)
     else:
         raise ValueError(f'{name} not in models')

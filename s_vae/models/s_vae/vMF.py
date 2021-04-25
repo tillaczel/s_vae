@@ -70,6 +70,7 @@ class vMF(Distribution):
             4 * torch.pow(self.scale, 2) + torch.pow(self.ndim - 1, 2))) / 4
         d = 4 * a * b / (1 + b) - (self.ndim - 1) * torch.log(self.ndim - 1)
 
+
         # Acceptance/Rejection sampling:
         accpt = torch.zeros_like(b, dtype=torch.bool)
 
@@ -104,10 +105,21 @@ class vMF(Distribution):
             if number_rejected == 0:
                 break
             if i>100:
+                
+
+                print("#### REJECTED ####")
                 print('number_rejected', number_rejected)
+                print(self.scale[indx_rejected])
+                print("a for the rejected: ", _a)
+                print("b for the rejected: ", _b)
                 print('T', T)
                 print('_d', _d)
                 print('u', u)
+                print("#### ALLTOGETHER ####")
+                print(self.scale)
+                print("a for all: ", a)
+                print("b for all: ", b)
+                print("d for all: ", d)
                 break
 
         return omega
@@ -164,10 +176,10 @@ if __name__ == "__main__":
 
     mu = hyp.sample(torch.Size((5,)))
     print(mu)
-    kappa = torch.tensor([2.5] * 5)
+    kappa = torch.tensor([2946.5] * 5)
     kappa = kappa[:, None]
     print(kappa)
 
-    test_vmf = vMF(mu, kappa)
+    test_vmf = vMF(mu, kappa, 'cpu')
     sample = test_vmf.rsample(torch.Size((5, 5)))
     print(torch.linalg.norm(sample, ord=2, dim=-1))

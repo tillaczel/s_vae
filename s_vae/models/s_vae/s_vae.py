@@ -6,18 +6,24 @@ from s_vae.models.s_vae.vMF import vMF
 
 
 class SVAE(nn.Module):
-    def __init__(self, encoder: nn.Module, decoder: nn.Module, encoder_out_dim: int, latent_dim: int, kl_coeff: float,
+    def __init__(self, encoder: nn.Module, decoder: nn.Module, encoder_out_dim: int, 
+                 decoder_out_dim: int, recon_shape: int, latent_dim: int, kl_coeff: float,
                  device):
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
         self.latent_dim = latent_dim
+        self.recon_shape = recon_shape
 
         self.kl_coeff = kl_coeff
         self._device = device
 
         self.fc_mu = nn.Linear(encoder_out_dim, latent_dim)
         self.fc_kappa = nn.Linear(encoder_out_dim, 1)  # concentration parameter is just a scalar
+        
+        
+        self.fc_xhat = nn.Linear(decoder_out_dim, recon_shape)
+        self.fc_log_var = nn.Linear(decoder_out_dim, 1)
 
     @property
     def device(self):
@@ -35,26 +41,30 @@ class SVAE(nn.Module):
 
     def decode(self, z):
         reconstructed = self.decoder(z)
-        return reconstructed
+
+        xhat = self.fc_xhat(reconstructed)
+        log_var = self.fc_log_var(reconstructed)
+
+        return xhat, log_var
 
     def _forward(self, x):
         mu, kappa = self.encode(x)
         p, q, z = self.sample(mu, kappa)
-        x_hat = self.decode(z)
-        return x_hat, mu, kappa, p, q, z
+        x_hat, log_var = self.decode(z)
+        return x_hat, log_var ,mu, kappa, p, q, z
 
     def forward(self, x):
-        x_hat, mu, log_var, p, q, z = self._forward(x)
+        x_hat, log_var, mu, kappa, p, q, z = self._forward(x)
         return x_hat, z
 
     def step(self, x):
-        x_hat, mu, kappa, p, q, z = self._forward(x)
+        x_hat, log_var, mu, kappa, p, q, z = self._forward(x)
 
-        loss_recon = F.mse_loss(x_hat, x, reduction='mean')
+        loss_recon = F.mse_loss(x_hat, x, reduction='none').mean(axis = 0)
 
         loss_kl = self.kl_coeff * torch.distributions.kl.kl_divergence(q, p).mean()
 
-        loss = loss_kl + loss_recon
+        loss = loss_kl + 1/(2 * torch.exp(log_var)) * loss_recon + (self.recon_shape/2)*log_var
 
         return {'loss': loss, 'loss_recon': loss_recon, 'loss_kl': loss_kl}
 
