@@ -14,12 +14,12 @@ data:
   n_test_samples: 10000  # Only for synthetic
 
 model:
-  name: 's_vae'
+  name: 'vae'
   latent_dim: 3
   kl_coeff: 1
   backbone:
-    name: 'linear'  # Options: ['linear', 'conv']
-    hidden_dims: !!python/list [32, 64]
+    name: 'conv'  # Options: ['linear', 'conv']
+    hidden_dims: !!python/list [64, 32]
     data_shape: !!python/tuple [1, 28, 28]
 
 training:
@@ -39,7 +39,7 @@ training:
     monitor: 'valid/loss'
     save_top_k: 5
 
-gpu: 0
+gpu: 1
 
 
 

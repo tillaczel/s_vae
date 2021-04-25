@@ -1,67 +1,90 @@
 from torch import nn
+import numpy as np
 
 from s_vae.models.backbone.utils import Reshape
 
 
-def conv_encoder(data_shape, hidden_dims):
-    in_channels = data_shape[0]
-    modules = list()
-    for h_dim in hidden_dims:
-        modules.append(nn.Conv2d(in_channels=in_channels,
-                                out_channels=h_dim,
-                                kernel_size=3,
-                                stride=1,
-                                padding=1))
-        modules.append(nn.BatchNorm2d(h_dim))
-        modules.append(nn.LeakyReLU())
-        in_channels = h_dim
-    modules = modules[:-2]
-    modules.append(nn.Flatten())
-    encoder = nn.Sequential(*modules)
-    return encoder, hidden_dims[-1]*data_shape[1]*data_shape[2]
+class ConvEncoder(nn.Module):
+    def __init__(self, in_dim, hidden_dims):
+        super().__init__()
+        self.in_dim = in_dim
+        self.hidden_dims = hidden_dims
+        self.encoder, self.out_dim = self.build_encoder()
+
+    def forward(self, x):
+        return self.encoder(x)
+
+    def build_encoder(self):
+        in_channels = self.in_dim[0]
+        modules = list()
+        for h_dim in self.hidden_dims:
+            modules.append(nn.Conv2d(in_channels=in_channels,
+                                    out_channels=h_dim,
+                                    kernel_size=3,
+                                    stride=1,
+                                    padding=1))
+            modules.append(nn.BatchNorm2d(h_dim))
+            modules.append(nn.LeakyReLU())
+            in_channels = h_dim
+        modules = modules[:-2]
+        modules.append(nn.Flatten())
+        encoder = nn.Sequential(*modules)
+        return encoder, self.hidden_dims[-1]*self.in_dim[1]*self.in_dim[2]
 
 
-def conv_decoder(latent_dim, hidden_dims, data_shape):
-    kernel_size, stride, output_padding = 3, 1, 0
+class ConvDecoder(nn.Module):
+    def __init__(self, in_dim, hidden_dims, data_shape):
+        super().__init__()
+        self.in_dim = in_dim
+        self.hidden_dims = hidden_dims
+        self.decoder, self.out_dim = self.build_decoder(data_shape)
 
-    layer_shapes = [(data_shape[1], data_shape[2])]
-    paddings = list()
-    for _ in hidden_dims:
-        h_ = layer_shapes[-1][0] - (kernel_size-1) - 1 - output_padding
-        h_padding = int(stride-(stride % h_)/2)
-        h = (h_ + h_padding*2) / stride + 1
-        w_ = layer_shapes[-1][1] - (kernel_size-1) - 1 - output_padding
-        w_padding = int(stride-(stride % w_)/2)
-        w = (w_ + w_padding*2) / stride + 1
-        layer_shapes.append((int(h), int(w)))
-        paddings.append((h_padding, w_padding))
-    output_paddings = paddings[::-1]
+        self.fc_mu = nn.Conv2d(self.hidden_dims[-1],
+                                 out_channels=data_shape[0],
+                                 kernel_size=3,
+                                 padding=1)
+        self.fc_log_var = nn.Sequential(nn.Flatten(),
+                                        nn.Linear(np.prod(self.out_dim), 1))
 
-    in_channels = data_shape[0]
+    def forward(self, x):
+        x = self.decoder(x)
+        return self.fc_mu(x), self.fc_log_var(x)
 
-    modules = list()
-    modules.append(nn.Linear(in_features=latent_dim,
-                             out_features=in_channels * layer_shapes[-1][0] * layer_shapes[-1][1]))
-    modules.append(Reshape((1, *layer_shapes[-1])))
-    for h_dim, padding in zip(hidden_dims, paddings):
-        modules.append(
-            nn.Sequential(
-                nn.ConvTranspose2d(in_channels=in_channels,
-                                   out_channels=h_dim,
-                                   kernel_size=kernel_size,
-                                   stride=stride,
-                                   padding=padding,
-                                   output_padding=output_padding),
-                nn.BatchNorm2d(h_dim),
-                nn.LeakyReLU())
-        )
-        in_channels = h_dim
+    def build_decoder(self, data_shape):
+        kernel_size, stride, output_padding = 3, 1, 0
 
-    modules.append(nn.Conv2d(hidden_dims[-1],
-                             out_channels=data_shape[0],
-                             kernel_size=3,
-                             padding=1))
-    modules.append(nn.Sigmoid())
+        layer_shapes = [(data_shape[1], data_shape[2])]
+        paddings = list()
+        for _ in self.hidden_dims:
+            h_ = layer_shapes[-1][0] - (kernel_size-1) - 1 - output_padding
+            h_padding = int(stride-(stride % h_)/2)
+            h = (h_ + h_padding*2) / stride + 1
+            w_ = layer_shapes[-1][1] - (kernel_size-1) - 1 - output_padding
+            w_padding = int(stride-(stride % w_)/2)
+            w = (w_ + w_padding*2) / stride + 1
+            layer_shapes.append((int(h), int(w)))
+            paddings.append((h_padding, w_padding))
+        paddings = paddings[::-1]
 
-    decoder = nn.Sequential(*modules)
-    return decoder
+        in_channels = data_shape[0]
+
+        modules = list()
+        modules.append(nn.Linear(in_features=self.in_dim,
+                                 out_features=in_channels * layer_shapes[-1][0] * layer_shapes[-1][1]))
+        modules.append(Reshape((1, *layer_shapes[-1])))
+        for h_dim, padding in zip(self.hidden_dims, paddings):
+            modules.append(
+                nn.Sequential(
+                    nn.ConvTranspose2d(in_channels=in_channels,
+                                       out_channels=h_dim,
+                                       kernel_size=kernel_size,
+                                       stride=stride,
+                                       padding=padding,
+                                       output_padding=output_padding),
+                    nn.BatchNorm2d(h_dim),
+                    nn.LeakyReLU())
+            )
+            in_channels = h_dim
+
+        decoder = nn.Sequential(*modules)
+        return decoder, (self.hidden_dims[-1], np.prod(layer_shapes[0]))

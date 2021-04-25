@@ -1,13 +1,14 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
+import numpy as np
+
 from s_vae.models.s_vae.unif_on_sphere import UnifOnSphere
 from s_vae.models.s_vae.vMF import vMF
 
 
 class SVAE(nn.Module):
-    def __init__(self, encoder: nn.Module, decoder: nn.Module, encoder_out_dim: int, 
-                 decoder_out_dim: int, recon_shape: int, latent_dim: int, kl_coeff: float,
+    def __init__(self, encoder: nn.Module, decoder: nn.Module, recon_shape: int, latent_dim: int, kl_coeff: float,
                  device):
         super().__init__()
         self.encoder = encoder
@@ -18,12 +19,8 @@ class SVAE(nn.Module):
         self.kl_coeff = kl_coeff
         self._device = device
 
-        self.fc_mu = nn.Linear(encoder_out_dim, latent_dim)
-        self.fc_kappa = nn.Linear(encoder_out_dim, 1)  # concentration parameter is just a scalar
-        
-        
-        self.fc_xhat = nn.Linear(decoder_out_dim, recon_shape)
-        self.fc_log_var = nn.Linear(decoder_out_dim, 1)
+        self.fc_mu = nn.Linear(encoder.out_dim, latent_dim)
+        self.fc_kappa = nn.Linear(encoder.out_dim, 1)  # concentration parameter is just a scalar
 
     @property
     def device(self):
@@ -40,18 +37,15 @@ class SVAE(nn.Module):
         return mu, kappa
 
     def decode(self, z):
-        reconstructed = self.decoder(z)
+        x_hat, log_var = self.decoder(z)
 
-        xhat = self.fc_xhat(reconstructed)
-        log_var = self.fc_log_var(reconstructed)
-
-        return xhat, log_var
+        return x_hat, log_var
 
     def _forward(self, x):
         mu, kappa = self.encode(x)
         p, q, z = self.sample(mu, kappa)
         x_hat, log_var = self.decode(z)
-        return x_hat, log_var ,mu, kappa, p, q, z
+        return x_hat, log_var, mu, kappa, p, q, z
 
     def forward(self, x):
         x_hat, log_var, mu, kappa, p, q, z = self._forward(x)
@@ -60,11 +54,12 @@ class SVAE(nn.Module):
     def step(self, x):
         x_hat, log_var, mu, kappa, p, q, z = self._forward(x)
 
-        loss_recon = F.mse_loss(x_hat, x, reduction='none').mean(axis = 0)
+        loss_recon = F.mse_loss(x_hat, x, reduction='none').view(-1, np.prod(self.recon_shape)).sum(axis=1, keepdim=True)
+        loss_recon = 1 / (2 * torch.exp(log_var)) * loss_recon + (1 / 2) * log_var
+        loss_recon = loss_recon.mean(axis=0)
 
         loss_kl = self.kl_coeff * torch.distributions.kl.kl_divergence(q, p).mean()
-
-        loss = loss_kl + 1/(2 * torch.exp(log_var)) * loss_recon + (self.recon_shape/2)*log_var
+        loss = loss_kl + loss_recon
 
         return {'loss': loss, 'loss_recon': loss_recon, 'loss_kl': loss_kl}
 
