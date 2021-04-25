@@ -78,8 +78,9 @@ class vMF(Distribution):
         number_rejected = (accpt == 0).count_nonzero()
         omega = torch.empty(size=(sample_shape[0], 1), dtype=torch.float64, device=self.device).view(-1)
         _omega = torch.empty(size=(sample_shape[0], 1), dtype=torch.float64, device=self.device).view(-1)
+        i = 0
         while True:
-
+            i += 1
             _a = a[indx_rejected]
             _b = b[indx_rejected]
             _d = d[indx_rejected]
@@ -101,6 +102,12 @@ class vMF(Distribution):
             number_rejected = (accpt == 0).count_nonzero()
 
             if number_rejected == 0:
+                break
+            if i>100:
+                print('number_rejected', number_rejected)
+                print('T', T)
+                print('_d', _d)
+                print('u', u)
                 break
 
         return omega

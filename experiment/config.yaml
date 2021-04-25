@@ -18,7 +18,7 @@ model:
   latent_dim: 3
   kl_coeff: 0
   backbone:
-    name: 'linear'  # Options: ['linear', 'conv']
+    name: 'conv'  # Options: ['linear', 'conv']
     hidden_dims: !!python/list [32, 64]
     data_shape: !!python/tuple [1, 28, 28]
 
