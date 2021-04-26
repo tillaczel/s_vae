@@ -104,23 +104,6 @@ class vMF(Distribution):
 
             if number_rejected == 0:
                 break
-            if i>100:
-                
-
-                print("#### REJECTED ####")
-                print('number_rejected', number_rejected)
-                print(self.scale[indx_rejected])
-                print("a for the rejected: ", _a)
-                print("b for the rejected: ", _b)
-                print('T', T)
-                print('_d', _d)
-                print('u', u)
-                print("#### ALLTOGETHER ####")
-                print(self.scale)
-                print("a for all: ", a)
-                print("b for all: ", b)
-                print("d for all: ", d)
-                break
 
         return omega
 
