@@ -14,17 +14,17 @@ data:
   n_test_samples: 10000  # Only for synthetic
 
 model:
-  name: 's_vae'
-  latent_dim: 3 # start with simple! 
-  kl_coeff: 0
+  name: 'vae'
+  latent_dim: 3
   backbone:
-    name: 'linear'  # Options: ['linear', 'conv']
-    hidden_dims: !!python/list [32, 64]
+    name: 'conv'  # Options: ['linear', 'conv']
+    hidden_dims: !!python/list [64, 32]
     data_shape: !!python/tuple [1, 28, 28]
 
 training:
   batch_size: 32
   max_epochs: 10
+  fix_var: 0.0001
   optimizer:
     name: 'adam'
     lr: 0.0001
@@ -38,14 +38,8 @@ training:
   ckpt_callback:
     monitor: 'valid/loss'
     save_top_k: 5
-  anomaly: True
 
-gpu: 0
+gpu: 1
 
-anomaly: 
-  checkpoint_path: "/s_vae/local/logs/name/version_0/checkpoints/epoch=20.ckpt" # need model not trained on anomaly class
-                    
-knn:
-  checkpoint_path: "/s_vae/local/logs/name/version_1/checkpoints/epoch=20.ckpt" # need model trained on all classes
-  n_neighbors: 3
-  
+
+

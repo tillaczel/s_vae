@@ -1,19 +1,21 @@
+import numpy as np
 import torch
 from torch import nn
 from torch.nn import functional as F
 
+from s_vae.models.backbone.utils import Reshape
+
 
 class VAE(nn.Module):
-    def __init__(self, encoder: nn.Module, decoder: nn.Module, encoder_out_dim: int, latent_dim: int, kl_coeff: float):
+    def __init__(self, encoder: nn.Module, decoder: nn.Module, recon_shape: int, latent_dim: int):
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
         self.latent_dim = latent_dim
+        self.recon_shape = recon_shape
 
-        self.kl_coeff = kl_coeff
-
-        self.fc_mu = nn.Linear(encoder_out_dim, latent_dim)
-        self.fc_var = nn.Linear(encoder_out_dim, latent_dim)
+        self.fc_mu = nn.Linear(encoder.out_dim, latent_dim)
+        self.fc_var = nn.Linear(encoder.out_dim, latent_dim)
 
     def encode(self, x):
         encoded = self.encoder(x)
@@ -24,13 +26,14 @@ class VAE(nn.Module):
         return mu, log_var
 
     def decode(self, z):
-        reconstructed = self.decoder(z)
-        return reconstructed
+        x_hat, log_var = self.decoder(z)
+
+        return x_hat, log_var
 
     def _forward(self, x):
         mu, log_var = self.encode(x)
         p, q, z = self.sample(mu, log_var)
-        x_hat = self.decode(z)
+        x_hat, log_var = self.decode(z)
         return x_hat, mu, log_var, p, q, z
 
     def forward(self, x):
@@ -40,14 +43,15 @@ class VAE(nn.Module):
     def step(self, x):
         x_hat, mu, log_var, p, q, z = self._forward(x)
 
-        loss_recon = F.mse_loss(x_hat, x, reduction='mean')
+        loss_recon = F.mse_loss(x_hat, x, reduction='none').view(-1, np.prod(self.recon_shape)).sum(axis=1, keepdim=True)
+        loss_recon = 1 / (2 * torch.exp(log_var)) * loss_recon + (1 / 2) * log_var
+        loss_recon = loss_recon.mean(axis=0)
 
         log_qz = q.log_prob(z)
         log_pz = p.log_prob(z)
 
         loss_kl = log_qz - log_pz
         loss_kl = loss_kl.mean()
-        loss_kl *= self.kl_coeff
 
         loss = loss_kl + loss_recon
 
