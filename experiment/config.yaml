@@ -14,7 +14,7 @@ data:
   n_test_samples: 10000  # Only for synthetic
 
 model:
-  name: 'vae'
+  name: 's_vae'
   latent_dim: 3
   kl_coeff: 1
   backbone:
@@ -27,7 +27,7 @@ training:
   max_epochs: 100
   optimizer:
     name: 'adam'
-    lr: 0.01
+    lr: 0.00001
   scheduler:
     name: 'plateau'
     mode: 'min'
