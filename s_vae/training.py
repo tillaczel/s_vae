@@ -40,7 +40,7 @@ def create_trainer(config: dict):
                          progress_bar_refresh_rate=20,
                          deterministic=True,
                          terminate_on_nan=True,
-                         num_sanity_val_steps=1,
+                         num_sanity_val_steps=0,
                          callbacks=_callbacks
                          )
     return trainer
