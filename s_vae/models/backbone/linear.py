@@ -21,21 +21,32 @@ class LinearEncoder(nn.Module):
 
 
 class LinearDecoder(nn.Module):
-    def __init__(self, in_dim, hidden_dims, recon_shape):
+    def __init__(self, in_dim, hidden_dims, recon_shape, fix_var):
         super().__init__()
         self.in_dim = in_dim
         self.hidden_dims = hidden_dims
+        self.fix_var = fix_var
+        self.fix_var = fix_var
+        if fix_var():
+            self._fix_var = fix_var()
+        else:
+            self._fix_var = 1e-4
 
         modules = list()
         self.decoder, self.out_dim = construct_linear_layers(modules, in_dim, hidden_dims)
 
-        self.fc_mu = nn.Sequential(nn.Linear(self.out_dim, np.prod(recon_shape)),
-                                   Reshape(recon_shape))
+        self.fc_mu = nn.Linear(self.out_dim, np.prod(recon_shape))
+        self.reshape = Reshape(recon_shape)
         self.fc_log_var = nn.Linear(self.out_dim, 1)
 
     def forward(self, x):
         x = self.decoder(x)
-        return self.fc_mu(x), self.fc_log_var(x)
+        mu, log_var = self.reshape(self.fc_mu(x)), self.fc_log_var(x)
+        if self.fix_var():
+            log_var = log_var*0+self.fix_var()
+        else:
+            log_var = log_var*self._fix_var
+        return mu, log_var
 
 
 def construct_linear_layers(modules, in_dim, hidden_dims):

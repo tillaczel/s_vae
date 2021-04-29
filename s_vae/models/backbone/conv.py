@@ -48,12 +48,11 @@ class ConvDecoder(nn.Module):
                                  out_channels=data_shape[0],
                                  kernel_size=3,
                                  padding=1)
-        self.fc_log_var = nn.Sequential(nn.Flatten(),
-                                        nn.Linear(np.prod(self.out_dim), 1))
+        self.fc_log_var = nn.Linear(np.prod(self.out_dim), 1)
 
     def forward(self, x):
         x = self.decoder(x)
-        mu, log_var = self.fc_mu(x), self.fc_log_var(x)
+        mu, log_var = self.fc_mu(x), self.fc_log_var(nn.Flatten()(x))
         if self.fix_var():
             log_var = log_var*0+self.fix_var()
         else:
