@@ -52,12 +52,28 @@ def train(config: dict):
     train_loader, valid_loader, test_loader = create_data_loaders(config)
 
     engine = EngineModule(config)
-    trainer_fix_var = create_trainer(config)
-    trainer_fix_var.fit(model=engine, train_dataloader=train_loader, val_dataloaders=valid_loader)
-    trainer_fix_var.test(test_dataloaders=valid_loader)
+    trainer = create_trainer(config)
+
+    trainer.fit(model=engine, train_dataloader=train_loader, val_dataloaders=valid_loader)
+    trainer.test(test_dataloaders=valid_loader)
 
     engine.set_fix_var(False)
+    engine.freeze_model()
+    engine.freeze_var(False)
     trainer = create_trainer(config)
     trainer.fit(model=engine, train_dataloader=train_loader, val_dataloaders=valid_loader)
     trainer.test(test_dataloaders=valid_loader)
+
+    # engine.freeze_var(True)
+    # engine.freeze_mean(False)
+    # trainer = create_trainer(config)
+    # trainer.fit(model=engine, train_dataloader=train_loader, val_dataloaders=valid_loader)
+    # trainer.test(test_dataloaders=valid_loader)
+
+    # engine.freeze_model(False)
+    # engine.freeze_mean(True)
+    # engine.freeze_var(True)
+    # trainer = create_trainer(config)
+    # trainer.fit(model=engine, train_dataloader=train_loader, val_dataloaders=valid_loader)
+    # trainer.test(test_dataloaders=valid_loader)
 

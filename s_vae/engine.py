@@ -18,7 +18,6 @@ class EngineModule(pl.LightningModule):
 
         self.data_vis = dataset_vis_factory(config['data']['name'])
 
-
     @property
     def lr(self):
         return self.optimizers().param_groups[0]['lr']
@@ -29,6 +28,18 @@ class EngineModule(pl.LightningModule):
 
     def set_fix_var(self, fix_var):
         self._fix_var = fix_var
+
+    def freeze_model(self, freeze=True):
+        for param in self.model.parameters():
+            param.requires_grad = not freeze
+
+    def freeze_mean(self, freeze=True):
+        self.model.decoder.fc_mu.weight.requires_grad = not freeze
+        self.model.decoder.fc_mu.bias.requires_grad = not freeze
+
+    def freeze_var(self, freeze=True):
+        self.model.decoder.fc_log_var.weight.requires_grad = not freeze
+        self.model.decoder.fc_log_var.bias.requires_grad = not freeze
 
     def forward(self, x):
         return self.model(x)
