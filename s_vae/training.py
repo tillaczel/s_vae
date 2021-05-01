@@ -57,9 +57,9 @@ def train(config: dict):
     trainer.fit(model=engine, train_dataloader=train_loader, val_dataloaders=valid_loader)
     trainer.test(test_dataloaders=valid_loader)
 
-    engine.set_fix_var(False)
-    engine.freeze_model()
-    engine.freeze_var(False)
+    #engine.set_fix_var(False)
+    #engine.freeze_model(False)
+    #engine.freeze_var(False)
     trainer = create_trainer(config)
     trainer.fit(model=engine, train_dataloader=train_loader, val_dataloaders=valid_loader)
     trainer.test(test_dataloaders=valid_loader)

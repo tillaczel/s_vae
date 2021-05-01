@@ -8,13 +8,13 @@ from s_vae.models.s_vae.vMF import vMF
 
 
 class SVAE(nn.Module):
-    def __init__(self, encoder: nn.Module, decoder: nn.Module, recon_shape: int, latent_dim: int, device):
+    def __init__(self, encoder: nn.Module, decoder: nn.Module, backbone_name:str ,recon_shape: int, latent_dim: int, device):
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
         self.latent_dim = latent_dim
         self.recon_shape = recon_shape
-
+        self.backbone_name = backbone_name
         self._device = device
 
         self.fc_mu = nn.Linear(encoder.out_dim, latent_dim)
@@ -35,14 +35,23 @@ class SVAE(nn.Module):
         return mu, kappa
 
     def decode(self, z):
-        x_hat, log_var = self.decoder(z)
-
+        if self.backbone_name == 'linear_bern':
+            x_hat = self.decoder(z)
+            log_var = None
+        else:
+            x_hat, log_var = self.decoder(z)
         return x_hat, log_var
 
     def _forward(self, x):
+        # dynamic binarization
+        x = (x > torch.distributions.Uniform(0, 1).sample(x.shape)).float()
         mu, kappa = self.encode(x)
         p, q, z = self.sample(mu, kappa)
-        x_hat, log_var = self.decode(z)
+        if self.backbone_name == 'linear_bern':
+            x_hat, log_var = self.decode(z)
+
+        else:
+            x_hat, log_var = self.decode(z)
         return x_hat, log_var, mu, kappa, p, q, z
 
     def forward(self, x):
@@ -52,13 +61,16 @@ class SVAE(nn.Module):
     def step(self, x):
         x_hat, log_var, mu, kappa, p, q, z = self._forward(x)
 
-        loss_recon = F.mse_loss(x_hat, x, reduction='none').view(-1, np.prod(self.recon_shape)).sum(axis=1, keepdim=True)
-        loss_recon = 1 / (2 * torch.exp(log_var)) * loss_recon + (1 / 2) * log_var
-        loss_recon = loss_recon.mean(axis=0)
+        if self.backbone_name == 'linear_bern':
+            loss_recon = F.binary_cross_entropy(x_hat, x, reduction='none').view(-1, np.prod(self.recon_shape)).sum(axis=1, keepdim=True)
+            loss_recon = loss_recon.mean(axis=0)
+        else:
+            loss_recon = F.mse_loss(x_hat, x, reduction='none').view(-1, np.prod(self.recon_shape)).sum(axis=1, keepdim=True)
+            loss_recon = 1 / (2 * torch.exp(log_var)) * loss_recon + (1 / 2) * log_var
+            loss_recon = loss_recon.mean(axis=0)
 
         loss_kl = torch.distributions.kl.kl_divergence(q, p).mean()
         loss = loss_kl + loss_recon
-
         return {'loss': loss, 'loss_recon': loss_recon, 'loss_kl': loss_kl}
 
     def sample(self, mu, kappa):
