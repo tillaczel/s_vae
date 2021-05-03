@@ -40,7 +40,7 @@ def create_trainer(config: dict):
                          progress_bar_refresh_rate=20,
                          deterministic=True,
                          terminate_on_nan=True,
-                         num_sanity_val_steps=0,
+                         num_sanity_val_steps=1,
                          callbacks=_callbacks
                          )
     return trainer
@@ -55,5 +55,5 @@ def train(config: dict):
     engine = EngineModule(config)
     trainer.fit(model=engine, train_dataloader=train_loader, val_dataloaders=valid_loader)
 
-    trainer.test(test_dataloaders=valid_loader)
+    trainer.test(test_dataloaders=test_loader)
 

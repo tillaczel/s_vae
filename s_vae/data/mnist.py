@@ -6,7 +6,8 @@ import requests
 import os
 import matplotlib.pyplot as plt
 import numpy as np
-
+import random
+import torch
 
 def create_MNIST(path: str, train_ratio):
     # ------------------------------------------------------------------------------------------------------------ #
@@ -26,8 +27,21 @@ def create_MNIST(path: str, train_ratio):
     transform = transforms.Compose([transforms.ToTensor()])
     dataset = MNIST(root=path, train=True, transform=transform, download=True)
     train_size = int(train_ratio * len(dataset))
-    train_set, valid_set = random_split(dataset, [train_size, len(dataset) - train_size])
+
+
+    if config['training']['anomaly']: 
+        ## Split data into train [0..8] and anomaly [9]
+        training_set = []
+        for i in range(0, len(dataset)):
+        if dataset[i][1] < 9:
+            training_set.append(dataset[i])
+
+
+    # split training set into train and validation 
+    train_set, valid_set = random_split(training_set, [train_size, len(training_set) - train_size])
+    # Use the whole set as test_set, plus the 9's that are in the anomaly_set
     test_set = MNIST(root=path, train=False, transform=transform, download=True)
+
     return train_set, valid_set, test_set
 
 
