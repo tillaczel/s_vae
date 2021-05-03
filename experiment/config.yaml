@@ -38,8 +38,13 @@ training:
   ckpt_callback:
     monitor: 'valid/loss'
     save_top_k: 5
+  anomaly: False
 
 gpu: 1
 
+anomaly:
+  checkpoint_path: "/s_vae/local/logs/name/version_0/checkpoints/epoch=20.ckpt" # need model not trained on anomaly class
 
-
+knn:
+  checkpoint_path: "/s_vae/local/logs/name/version_1/checkpoints/epoch=20.ckpt" # need model trained on all classes
+  n_neighbors: 3
