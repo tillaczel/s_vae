@@ -7,12 +7,13 @@ from s_vae.models.backbone.utils import Reshape
 
 
 class VAE(nn.Module):
-    def __init__(self, encoder: nn.Module, decoder: nn.Module, recon_shape: int, latent_dim: int):
+    def __init__(self, encoder: nn.Module, decoder: nn.Module, backbone_name: str, recon_shape: int, latent_dim: int):
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
         self.latent_dim = latent_dim
         self.recon_shape = recon_shape
+        self.backbone_name = backbone_name
 
         self.fc_mu = nn.Linear(encoder.out_dim, latent_dim)
         self.fc_var = nn.Linear(encoder.out_dim, latent_dim)
@@ -26,14 +27,23 @@ class VAE(nn.Module):
         return mu, log_var
 
     def decode(self, z):
-        x_hat, log_var = self.decoder(z)
-
+        if self.backbone_name == 'linear_bern':
+            x_hat = self.decoder(z)
+            log_var = None
+        else:
+            x_hat, log_var = self.decoder(z)
         return x_hat, log_var
 
     def _forward(self, x):
+         # dynamic binarization
+        x = (x > torch.distributions.Uniform(0, 1).sample(x.shape)).float()
         mu, log_var = self.encode(x)
         p, q, z = self.sample(mu, log_var)
-        x_hat, log_var = self.decode(z)
+        if self.backbone_name == 'linear_bern':
+            x_hat, log_var = self.decode(z)
+
+        else:
+            x_hat, log_var = self.decode(z)
         return x_hat, mu, log_var, p, q, z
 
     def forward(self, x):
@@ -43,9 +53,13 @@ class VAE(nn.Module):
     def step(self, x):
         x_hat, mu, log_var, p, q, z = self._forward(x)
 
-        loss_recon = F.mse_loss(x_hat, x, reduction='none').view(-1, np.prod(self.recon_shape)).sum(axis=1, keepdim=True)
-        loss_recon = 1 / (2 * torch.exp(log_var)) * loss_recon + (1 / 2) * log_var
-        loss_recon = loss_recon.mean(axis=0)
+        if self.backbone_name == 'linear_bern':
+            loss_recon = F.binary_cross_entropy(x_hat, x, reduction='none').view(-1, np.prod(self.recon_shape)).sum(axis=1, keepdim=True)
+            loss_recon = loss_recon.mean(axis=0)
+        else:
+            loss_recon = F.mse_loss(x_hat, x, reduction='none').view(-1, np.prod(self.recon_shape)).sum(axis=1, keepdim=True)
+            loss_recon = 1 / (2 * torch.exp(log_var)) * loss_recon + (1 / 2) * log_var
+            loss_recon = loss_recon.mean(axis=0)
 
         log_qz = q.log_prob(z)
         log_pz = p.log_prob(z)

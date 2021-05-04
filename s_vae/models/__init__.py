@@ -1,7 +1,7 @@
 from s_vae.models.ae import AE
 from s_vae.models.vae import VAE
 from s_vae.models.s_vae import SVAE
-from s_vae.models.backbone.linear import LinearEncoder, LinearDecoder
+from s_vae.models.backbone.linear import LinearEncoder, LinearDecoder, LinearBernoulliDecoder
 from s_vae.models.backbone.conv import ConvEncoder, ConvDecoder
 
 
@@ -12,6 +12,8 @@ def build_backbone(model_config: dict, fix_var):
     data_shape = model_config['backbone']['data_shape']
     if name == 'linear':
         return LinearEncoder(data_shape, hidden_dims), LinearDecoder(latent_dim, hidden_dims[::-1], data_shape, fix_var)
+    elif name == 'linear_bern':
+        return LinearEncoder(data_shape, hidden_dims), LinearBernoulliDecoder(latent_dim, hidden_dims[::-1], data_shape)
     elif name == 'conv':
         return ConvEncoder(data_shape, hidden_dims), ConvDecoder(latent_dim, hidden_dims[::-1], data_shape, fix_var)
     else:
@@ -21,14 +23,14 @@ def build_backbone(model_config: dict, fix_var):
 def build_model(model_config: dict, device, fix_var):
     recon_shape = model_config['backbone']['data_shape']
     encoder, decoder = build_backbone(model_config, fix_var)
-
+    backbone_name = model_config['backbone']['name']
     name = model_config['name']
     latent_dim = model_config['latent_dim']
     if name == 'ae':
         return AE(encoder, decoder, latent_dim)
     elif name == 'vae':
-        return VAE(encoder, decoder, recon_shape, latent_dim)
+        return VAE(encoder, decoder, backbone_name ,recon_shape, latent_dim)
     elif name == 's_vae':
-        return SVAE(encoder, decoder, recon_shape, latent_dim, device)
+        return SVAE(encoder, decoder, backbone_name ,recon_shape, latent_dim, device)
     else:
         raise ValueError(f'{name} not in models')

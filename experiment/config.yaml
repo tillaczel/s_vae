@@ -17,7 +17,7 @@ model:
   name: 'vae'
   latent_dim: 3
   backbone:
-    name: 'linear'  # Options: ['linear', 'conv']
+    name: 'linear'  # Options: ['linear', 'linear_bern', 'conv']
     hidden_dims: !!python/list [64, 32]
     data_shape: !!python/tuple [1, 28, 28]
 

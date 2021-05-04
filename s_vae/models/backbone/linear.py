@@ -26,7 +26,6 @@ class LinearDecoder(nn.Module):
         self.in_dim = in_dim
         self.hidden_dims = hidden_dims
         self.fix_var = fix_var
-        self.fix_var = fix_var
         if fix_var():
             self._fix_var = fix_var()
         else:
@@ -47,6 +46,30 @@ class LinearDecoder(nn.Module):
         else:
             log_var = log_var*self._fix_var
         return mu, log_var
+
+class LinearBernoulliDecoder(nn.Module):
+    def __init__(self, in_dim, hidden_dims, recon_shape):
+        super().__init__()
+        self.in_dim = in_dim
+        self.hidden_dims = hidden_dims
+        self.out_dim = hidden_dims[-1]
+
+        modules = list()
+
+        for h_dim in hidden_dims:
+            modules.append(nn.Linear(in_features=in_dim, out_features=h_dim))
+            modules.append(nn.Tanh())
+            in_dim = h_dim
+
+        modules.append(nn.Linear(self.out_dim, np.prod(recon_shape)))
+        modules.append(nn.Sigmoid())
+        self.decoder = nn.Sequential(*modules)
+        self.reshape = Reshape(recon_shape)
+
+    def forward(self, x):
+        x = self.decoder(x)
+        xhat = self.reshape(x)
+        return xhat
 
 
 def construct_linear_layers(modules, in_dim, hidden_dims):
