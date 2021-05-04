@@ -39,7 +39,7 @@ training:
     monitor: 'valid/loss'
     save_top_k: 5
 
-gpu: 0
+gpu: 1
 
 
 
