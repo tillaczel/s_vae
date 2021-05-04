@@ -2,13 +2,14 @@ from s_vae.data.mnist import create_MNIST, vis_mnist
 from s_vae.data.synthetic_hypersphere import create_synthetic_hypersphere
 
 
-def create_dataset(data_config: dict, seed=0):
+def create_dataset(config: dict, seed=0):
+    data_config = config['data']
     name = data_config['name']
     path = data_config['path']
     train_ratio = data_config['train_ratio']
 
     if name == 'MNIST':
-        return create_MNIST(path, train_ratio)
+        return create_MNIST(config)
     elif name == 'synth':
         latent_dim = data_config['latent_dim']
         observed_dim = data_config['observed_dim']

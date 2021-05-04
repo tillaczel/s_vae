@@ -19,7 +19,7 @@ def crecte_ckpt_callback(ckpt_config: dict):
 
 
 def create_data_loaders(config: dict):
-    train_set, valid_set, test_set = create_dataset(config['data'], config['experiment']['seed'])
+    train_set, valid_set, test_set = create_dataset(config, config['experiment']['seed'])
 
     batch_size = config['training'].get('batch_size', 32)
     num_workers = config['data'].get('num_workers', 1)

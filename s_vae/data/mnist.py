@@ -6,10 +6,10 @@ import requests
 import os
 import matplotlib.pyplot as plt
 import numpy as np
-import random
-import torch
 
-def create_MNIST(path: str, train_ratio):
+
+def create_MNIST(config):
+    path, train_ratio = config['data']['path'], config['data']['train_ratio']
     # ------------------------------------------------------------------------------------------------------------ #
     # torchtext newest update (04.03.2021) broke pytorch-lightning, but older torch version can not download MNIST
     # because of a new redirect. Temporary solve to download MNIST manually
@@ -28,17 +28,16 @@ def create_MNIST(path: str, train_ratio):
     dataset = MNIST(root=path, train=True, transform=transform, download=True)
     train_size = int(train_ratio * len(dataset))
 
-
     if config['training']['anomaly']: 
         ## Split data into train [0..8] and anomaly [9]
-        training_set = []
+        _dataset = []
         for i in range(0, len(dataset)):
-        if dataset[i][1] < 9:
-            training_set.append(dataset[i])
+            if dataset[i][1] < 9:
+                _dataset.append(dataset[i])
+        dataset = _dataset
 
-
-    # split training set into train and validation 
-    train_set, valid_set = random_split(training_set, [train_size, len(training_set) - train_size])
+    # split training set into train and validation
+    train_set, valid_set = random_split(dataset, [train_size, len(dataset) - train_size])
     # Use the whole set as test_set, plus the 9's that are in the anomaly_set
     test_set = MNIST(root=path, train=False, transform=transform, download=True)
 

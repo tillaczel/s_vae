@@ -42,7 +42,7 @@ def knn(config):
     num_workers = config['data'].get('num_workers', 1)
 
     # create data loader, load in images, do test on them
-    train_set, val_set, test_set = create_MNIST(config['data']['path'], config['data']['train_ratio']) # with some paramters. These are dataloaders.
+    train_set, val_set, test_set = create_MNIST(config) # with some paramters. These are dataloaders.
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=num_workers)
     
     z_total = torch.empty(1,3)
