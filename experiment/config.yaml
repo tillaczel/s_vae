@@ -1,5 +1,5 @@
 experiment:
-  name: 'name'
+  name: 'nvae_linear'
   save_dir: '../../local/logs'
   seed: 1
 
@@ -15,10 +15,10 @@ data:
 
 model:
   name: 'vae'
-  latent_dim: 3
+  latent_dim: 2
   backbone:
     name: 'linear'  # Options: ['linear', 'conv']
-    hidden_dims: !!python/list [64, 32]
+    hidden_dims: !!python/list [128, 32]
     data_shape: !!python/tuple [1, 28, 28]
 
 training:
@@ -40,7 +40,7 @@ training:
     save_top_k: 5
   anomaly: False
 
-gpu: 1
+gpu: 0
 
 anomaly:
   checkpoint_path: "/s_vae/local/logs/name/version_0/checkpoints/epoch=20.ckpt" # need model not trained on anomaly class
@@ -48,3 +48,11 @@ anomaly:
 knn:
   checkpoint_path: "/s_vae/local/logs/name/version_1/checkpoints/epoch=20.ckpt" # need model trained on all classes
   n_neighbors: 3
+
+jacobian:
+  sampling: 'posterior' # Options: ['prior', 'posterior']
+  data_split: 'train' # Options: ['train', 'val', 'test']
+  num_samples: 1000 # For sampling = 'prior' in total num_samples will be drawn. For sampling = 'posterior' num_datapoints will be sampled.
+  checkpoint_path: '../../local/logs/name/version_nvae_linear_test/checkpoints/epoch=9.ckpt'
+  device: 'cpu'
+

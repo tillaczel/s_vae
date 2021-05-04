@@ -63,3 +63,8 @@ class VAE(nn.Module):
         q = torch.distributions.Normal(mu, std)
         z = p.rsample() * std + mu
         return p, q, z
+
+    def decode_exp(self, z):
+        x_hat, log_var = self.decoder(z)
+
+        return x_hat

@@ -67,3 +67,8 @@ class SVAE(nn.Module):
         z = q.rsample(sample_shape=mu.shape)
 
         return p, q, z
+    
+    def decode_exp(self, z):
+        x_hat, log_var = self.decoder(z)
+
+        return x_hat
