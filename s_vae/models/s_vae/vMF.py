@@ -27,13 +27,14 @@ class vMF(Distribution):
 
         self.loc = mu  # The mean direction vector
         self.scale = kappa.squeeze(dim=1)  # The concentration parameter
-        self.ndim = torch.tensor(mu.shape[-1], dtype=torch.float64, device=device())
-        self._device = device
+        self._device = 'cpu' #device
+        self.ndim = torch.tensor(mu.shape[-1], dtype=torch.float64, device='cpu') # removed ()
+        
 
     @property
     def device(self):
         if self._device is not None:
-            return self._device()
+            return self._device # removed ()
         else:
             return 'cpu'
 
@@ -70,7 +71,6 @@ class vMF(Distribution):
             4 * torch.pow(self.scale, 2) + torch.pow(self.ndim - 1, 2))) / 4
         d = 4 * a * b / (1 + b) - (self.ndim - 1) * torch.log(self.ndim - 1)
 
-
         # Acceptance/Rejection sampling:
         accpt = torch.zeros_like(b, dtype=torch.bool)
 
@@ -79,9 +79,8 @@ class vMF(Distribution):
         number_rejected = (accpt == 0).count_nonzero()
         omega = torch.empty(size=(sample_shape[0], 1), dtype=torch.float64, device=self.device).view(-1)
         _omega = torch.empty(size=(sample_shape[0], 1), dtype=torch.float64, device=self.device).view(-1)
-        i = 0
         while True:
-            i += 1
+
             _a = a[indx_rejected]
             _b = b[indx_rejected]
             _d = d[indx_rejected]
@@ -159,10 +158,10 @@ if __name__ == "__main__":
 
     mu = hyp.sample(torch.Size((5,)))
     print(mu)
-    kappa = torch.tensor([2946.5] * 5)
+    kappa = torch.tensor([2.5] * 5)
     kappa = kappa[:, None]
     print(kappa)
 
-    test_vmf = vMF(mu, kappa, 'cpu')
+    test_vmf = vMF(mu, kappa)
     sample = test_vmf.rsample(torch.Size((5, 5)))
     print(torch.linalg.norm(sample, ord=2, dim=-1))

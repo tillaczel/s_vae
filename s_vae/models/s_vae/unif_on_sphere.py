@@ -23,7 +23,7 @@ class UnifOnSphere(Distribution):
     @property
     def device(self):
         if self._device is not None:
-            return self._device()
+            return self._device # removed()
         else:
             return 'cpu'
 
@@ -37,7 +37,7 @@ class UnifOnSphere(Distribution):
         """
         shape = sample_shape if isinstance(sample_shape, torch.Size) else torch.Size([sample_shape])
         MultNorm = torch.distributions.MultivariateNormal(
-            torch.zeros(self._ndim, device=self.device), torch.eye(self._ndim, device=self.device)).sample(shape)
+            torch.zeros(self._ndim, device=self.device), torch.eye(self._ndim, device='cpu')).sample(shape)
 
         assert (R > 0)
         return (MultNorm * R) / torch.linalg.norm(MultNorm, dim=-1, ord=2, keepdim=True)

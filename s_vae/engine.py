@@ -52,7 +52,6 @@ class EngineModule(pl.LightningModule):
 
     def training_epoch_end(self, outputs: list):
         self.transform_and_log_results(outputs, 'train')
-        self.logger.log_metrics({'train/lr': self.lr}, step=self.current_epoch)
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
