@@ -60,7 +60,6 @@ class Jacobian_experiment():
     def run_experiment(self):
         
         z = self.sample_latent_points()
-        
         jacobians = self.calc_jacobian(z)
         determinants = self.calc_determinants(jacobians)
 
@@ -103,7 +102,7 @@ class Jacobian_experiment():
         determinants = []
         for jc in range(len(jacobians)):
             tnsr = jacobians[jc]
-            M = torch.matmul(tnsr, torch.transpose(tnsr, 0, 1))
+            M = torch.matmul(torch.transpose(tnsr, 0, 1),tnsr)
             detmnt = torch.linalg.det(M)
             determinants.append(torch.sqrt(torch.abs(detmnt)))
         return determinants
@@ -114,11 +113,11 @@ class Jacobian_experiment():
             train_set, val_set, test_set = create_MNIST(self.config) # with some paramters. These are dataloaders.
 
             if self.data_split == 'train':
-                loader = DataLoader(train_set, batch_size=32, shuffle=False, num_workers=0)
+                loader = DataLoader(train_set, batch_size=1, shuffle=False, num_workers=0)
             elif self.data_split == 'val':
-                loader = DataLoader(val_set, batch_size=32, shuffle=False, num_workers=0)
+                loader = DataLoader(val_set, batch_size=1, shuffle=False, num_workers=0)
             else:
-                loader = DataLoader(test_set, batch_size=32, shuffle=False, num_workers=0)
+                loader = DataLoader(test_set, batch_size=1, shuffle=False, num_workers=0)
         else:
             loader = None
         return loader
@@ -130,7 +129,7 @@ def main(config_path: str):
         config = yaml.load(fd, yaml.FullLoader)
     experiment = Jacobian_experiment(config)
     output = experiment.run_experiment()
-     
+    
     with open('../../local/jacobian/experiment_outcome.pickle', 'wb') as handle:
         pickle.dump(output, handle)
 
