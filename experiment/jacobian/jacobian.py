@@ -95,10 +95,8 @@ class Jacobian_experiment():
 
     def calc_jacobian(self,samples):
         jacobians = []
-        #for sample in range(len(samples)):
-        for sample in range(2):
+        for sample in range(len(samples)):
             jacobians.append(jacobian(self.model.decode, samples[sample]).squeeze().view(784,-1))
-        
         return jacobians
 
     def calc_determinants(self,jacobians):
@@ -108,7 +106,6 @@ class Jacobian_experiment():
             M = torch.matmul(tnsr, torch.transpose(tnsr, 0, 1))
             detmnt = torch.linalg.det(M)
             determinants.append(torch.sqrt(torch.abs(detmnt)))
-        print(determinants)
         return determinants
             
     
