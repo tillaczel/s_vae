@@ -13,13 +13,33 @@ class EngineModule(pl.LightningModule):
     def __init__(self, config: dict):
         super().__init__()
         self.config = config
-        self.model = build_model(config['model'], lambda: self.device)
+        self._fix_var = config['training']['fix_var']
+        self.model = build_model(config['model'], lambda: self.device, lambda: self.fix_var)
 
         self.data_vis = dataset_vis_factory(config['data']['name'])
 
     @property
     def lr(self):
         return self.optimizers().param_groups[0]['lr']
+
+    @property
+    def fix_var(self):
+        return self._fix_var
+
+    def set_fix_var(self, fix_var):
+        self._fix_var = fix_var
+
+    def freeze_model(self, freeze=True):
+        for param in self.model.parameters():
+            param.requires_grad = not freeze
+
+    def freeze_mean(self, freeze=True):
+        self.model.decoder.fc_mu.weight.requires_grad = not freeze
+        self.model.decoder.fc_mu.bias.requires_grad = not freeze
+
+    def freeze_var(self, freeze=True):
+        self.model.decoder.fc_log_var.weight.requires_grad = not freeze
+        self.model.decoder.fc_log_var.bias.requires_grad = not freeze
 
     def forward(self, x):
         return self.model(x)

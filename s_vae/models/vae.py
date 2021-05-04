@@ -7,14 +7,12 @@ from s_vae.models.backbone.utils import Reshape
 
 
 class VAE(nn.Module):
-    def __init__(self, encoder: nn.Module, decoder: nn.Module, recon_shape: int, latent_dim: int, kl_coeff: float):
+    def __init__(self, encoder: nn.Module, decoder: nn.Module, recon_shape: int, latent_dim: int):
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
         self.latent_dim = latent_dim
         self.recon_shape = recon_shape
-
-        self.kl_coeff = kl_coeff
 
         self.fc_mu = nn.Linear(encoder.out_dim, latent_dim)
         self.fc_var = nn.Linear(encoder.out_dim, latent_dim)
@@ -54,7 +52,6 @@ class VAE(nn.Module):
 
         loss_kl = log_qz - log_pz
         loss_kl = loss_kl.mean()
-        loss_kl *= self.kl_coeff
 
         loss = loss_kl + loss_recon
 

@@ -33,22 +33,31 @@ class ConvEncoder(nn.Module):
 
 
 class ConvDecoder(nn.Module):
-    def __init__(self, in_dim, hidden_dims, data_shape):
+    def __init__(self, in_dim, hidden_dims, data_shape, fix_var):
         super().__init__()
         self.in_dim = in_dim
         self.hidden_dims = hidden_dims
+        self.fix_var = fix_var
+        if fix_var():
+            self._fix_var = fix_var()
+        else:
+            self._fix_var = 1e-4
         self.decoder, self.out_dim = self.build_decoder(data_shape)
 
         self.fc_mu = nn.Conv2d(self.hidden_dims[-1],
                                  out_channels=data_shape[0],
                                  kernel_size=3,
                                  padding=1)
-        self.fc_log_var = nn.Sequential(nn.Flatten(),
-                                        nn.Linear(np.prod(self.out_dim), 1))
+        self.fc_log_var = nn.Linear(np.prod(self.out_dim), 1)
 
     def forward(self, x):
         x = self.decoder(x)
-        return self.fc_mu(x), self.fc_log_var(x)
+        mu, log_var = self.fc_mu(x), self.fc_log_var(nn.Flatten()(x))
+        if self.fix_var():
+            log_var = log_var*0+self.fix_var()
+        else:
+            log_var = log_var*self._fix_var
+        return mu, log_var
 
     def build_decoder(self, data_shape):
         kernel_size, stride, output_padding = 3, 1, 0

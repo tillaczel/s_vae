@@ -8,15 +8,13 @@ from s_vae.models.s_vae.vMF import vMF
 
 
 class SVAE(nn.Module):
-    def __init__(self, encoder: nn.Module, decoder: nn.Module, recon_shape: int, latent_dim: int, kl_coeff: float,
-                 device):
+    def __init__(self, encoder: nn.Module, decoder: nn.Module, recon_shape: int, latent_dim: int, device):
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
         self.latent_dim = latent_dim
         self.recon_shape = recon_shape
 
-        self.kl_coeff = kl_coeff
         self._device = device
 
         self.fc_mu = nn.Linear(encoder.out_dim, latent_dim)
@@ -58,7 +56,7 @@ class SVAE(nn.Module):
         loss_recon = 1 / (2 * torch.exp(log_var)) * loss_recon + (1 / 2) * log_var
         loss_recon = loss_recon.mean(axis=0)
 
-        loss_kl = self.kl_coeff * torch.distributions.kl.kl_divergence(q, p).mean()
+        loss_kl = torch.distributions.kl.kl_divergence(q, p).mean()
         loss = loss_kl + loss_recon
 
         return {'loss': loss, 'loss_recon': loss_recon, 'loss_kl': loss_kl}

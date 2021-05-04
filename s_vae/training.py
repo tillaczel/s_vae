@@ -49,11 +49,31 @@ def create_trainer(config: dict):
 def train(config: dict):
     pl.seed_everything(config['experiment'].get('seed', 8756))
 
-    trainer = create_trainer(config)
     train_loader, valid_loader, test_loader = create_data_loaders(config)
 
     engine = EngineModule(config)
-    trainer.fit(model=engine, train_dataloader=train_loader, val_dataloaders=valid_loader)
+    trainer = create_trainer(config)
 
+    trainer.fit(model=engine, train_dataloader=train_loader, val_dataloaders=valid_loader)
     trainer.test(test_dataloaders=valid_loader)
+
+    engine.set_fix_var(False)
+    engine.freeze_model()
+    engine.freeze_var(False)
+    trainer = create_trainer(config)
+    trainer.fit(model=engine, train_dataloader=train_loader, val_dataloaders=valid_loader)
+    trainer.test(test_dataloaders=valid_loader)
+
+    # engine.freeze_var(True)
+    # engine.freeze_mean(False)
+    # trainer = create_trainer(config)
+    # trainer.fit(model=engine, train_dataloader=train_loader, val_dataloaders=valid_loader)
+    # trainer.test(test_dataloaders=valid_loader)
+
+    # engine.freeze_model(False)
+    # engine.freeze_mean(True)
+    # engine.freeze_var(True)
+    # trainer = create_trainer(config)
+    # trainer.fit(model=engine, train_dataloader=train_loader, val_dataloaders=valid_loader)
+    # trainer.test(test_dataloaders=valid_loader)
 
