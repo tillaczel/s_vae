@@ -1,5 +1,5 @@
 experiment:
-  name: 'nvae_linear'
+  name: 'svae_linear'
   save_dir: '../../local/logs'
   seed: 1
 
@@ -8,14 +8,14 @@ data:
   path: '../../local/data'
   train_ratio: 0.8
   num_workers: 8
-  latent_dim: 3  # Only for synthetic
+  latent_dim: 2  # Only for synthetic
   observed_dim: 784  # Only for synthetic
   n_dev_samples: 50000  # Only for synthetic
   n_test_samples: 10000  # Only for synthetic
 
 model:
-  name: 'vae'
-  latent_dim: 2
+  name: 's_vae'
+  latent_dim: 3
   backbone:
     name: 'linear'  # Options: ['linear', 'conv']
     hidden_dims: !!python/list [128, 32]
@@ -24,10 +24,10 @@ model:
 training:
   batch_size: 32
   max_epochs: 10
-  fix_var: -1.3
+  fix_var: -10
   optimizer:
     name: 'adam'
-    lr: 0.0001
+    lr: 0.00001
   scheduler:
     name: 'plateau'
     mode: 'min'
@@ -39,6 +39,7 @@ training:
     monitor: 'valid/loss'
     save_top_k: 5
   anomaly: False
+
 
 gpu: 0
 
@@ -52,7 +53,7 @@ knn:
 jacobian:
   sampling: 'posterior' # Options: ['prior', 'posterior']
   data_split: 'train' # Options: ['train', 'val', 'test']
-  num_samples: 1000 # For sampling = 'prior' in total num_samples will be drawn. For sampling = 'posterior' num_datapoints will be sampled.
-  checkpoint_path: '../../local/logs/name/version_nvae_linear_test/checkpoints/epoch=9.ckpt'
+  num_samples: 48000 # For sampling = 'prior' in total num_samples will be drawn. For sampling = 'posterior' num_datapoints will be sampled.
+  checkpoint_path: '../../local/logs/name/nvae_linear_trained/checkpoints/epoch=9.ckpt'
   device: 'cpu'
 
