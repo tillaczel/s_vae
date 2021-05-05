@@ -60,17 +60,16 @@ class Jacobian_experiment():
     def run_experiment(self):
         
         z = self.sample_latent_points()
+        print(z.shape)
         jacobians = self.calc_jacobian(z)
         determinants = self.calc_determinants(jacobians)
 
         return determinants
 
-
-
     def sample_latent_points(self):
         if self.sampling == 'prior':
             if self.name == 's_vae':
-                distribution = UnifOnSphere(model.latent_dim, model._device)
+                distribution = UnifOnSphere(self.model.latent_dim, self.device)
             else:
                 distribution = torch.distributions.Normal(torch.zeros(self.model.latent_dim), torch.ones(self.model.latent_dim))
 
@@ -78,15 +77,19 @@ class Jacobian_experiment():
             
         else:
             x = self.get_data()
-            # kappa_or_log_var because it depends on the incoder
+
             mu_param_vector = []
             kappa_or_log_var_param_vector = []
             for batch,label in x:
                 mu, kappa_or_log_var = self.model.encode(batch)
                 mu_param_vector.append(mu)
-                kappa_or_log_var_param_vector.append(mu)
+                kappa_or_log_var_param_vector.append(kappa_or_log_var)
             mu = torch.stack(mu_param_vector)
             kappa_or_log_var = torch.stack(kappa_or_log_var_param_vector)
+
+            if self.name == 's_vae':
+                mu = mu.squeeze()
+                kappa_or_log_var = kappa_or_log_var.squeeze(dim = 2)
 
             p, q, z = self.model.sample(mu, kappa_or_log_var)
             
@@ -94,8 +97,15 @@ class Jacobian_experiment():
 
     def calc_jacobian(self,samples):
         jacobians = []
+
+        printcounter = 0
         for sample in range(len(samples)):
+        #for sample in range(2): Debug line
             jacobians.append(jacobian(self.model.decode, samples[sample]).squeeze().view(784,-1))
+            if printcounter == 1000:
+                print("Another 1000 Jacobians")
+                printcounter = 0
+            printcounter += 1
         return jacobians
 
     def calc_determinants(self,jacobians):
@@ -111,7 +121,6 @@ class Jacobian_experiment():
     def get_data(self):
         if self.data == 'MNIST':
             train_set, val_set, test_set = create_MNIST(self.config) # with some paramters. These are dataloaders.
-
             if self.data_split == 'train':
                 loader = DataLoader(train_set, batch_size=1, shuffle=False, num_workers=0)
             elif self.data_split == 'val':
@@ -129,8 +138,8 @@ def main(config_path: str):
         config = yaml.load(fd, yaml.FullLoader)
     experiment = Jacobian_experiment(config)
     output = experiment.run_experiment()
-    
-    with open('../../local/jacobian/experiment_outcome.pickle', 'wb') as handle:
+    path = '../../local/jacobian/' + config['experiment']['name']+'_'+config['jacobian']['sampling']
+    with open(path, 'wb') as handle:
         pickle.dump(output, handle)
 
 

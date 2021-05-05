@@ -1,12 +1,18 @@
+import sys
+sys.path.append('../../')
+
 import numpy as np
 import random
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, random_split
 import os
+import math 
 
+from s_vae.models.s_vae.unif_on_sphere import UnifOnSphere
+from s_vae.models.s_vae.vMF import vMF
 
-def generate_latent_data(n, dim=3, R=1, datadist=None, seed=0):
+def generate_latent_data(n, dim=2, R=1, datadist=None, vMF_centroids = 5 , seed=0, device = 'cpu'):
     """
     A function for generating n randomly distributed
     points on the surface of a hypersphere.
@@ -14,12 +20,11 @@ def generate_latent_data(n, dim=3, R=1, datadist=None, seed=0):
     n : number of points generated
     dim : dimension of the hypersphere
     R : radius of the hypersphere
-    datadist : a list of strings that may include 'uniform'
-               and 'skew'. 'uniform' is a random uniform
-               distribution. 'skew' is another n/2 data
-               points distributed in one m'th quadrant
-               (where all vectors have positive values)
-               of the hypersphere.
+    datadist : a list of strings that may include 'uniform' and 'vMF'. 
+            'uniform' is a uniform distribution on a hypersphere. 
+            'vMF' is the von Mises-Fischer distribution on a hypersphere.
+    vMF_centroids: number of centroids for the vMF distributions. Essentially means we sample from vMF_centroids vMF distributions with 
+                   vMF_centroids number of mean-vectors.
     """
     if datadist is None:
         datadist = ['uniform', 'skew']
@@ -27,28 +32,32 @@ def generate_latent_data(n, dim=3, R=1, datadist=None, seed=0):
     np.random.seed(seed)
 
     dim_arr = [[] for _ in range(dim)]
-
+            
     if 'uniform' in datadist:
-        for _ in range(n):
-            r = np.random.random(dim)**2
-            r = r/(r.sum())
-            coords = np.sqrt(r)
-            for i in range(dim):
-                if bool(random.getrandbits(1)):
-                    x = -1 * coords[i]
-                else:
-                    x = coords[i]
-                dim_arr[i].append(x*R)
+        distribution = UnifOnSphere(dim, device)
+        samples = distribution.sample(torch.Size((n,)))
 
-    if 'skew' in datadist:
-        for _ in range(int(n/2)):
-            rp = np.random.random(dim)
-            rp = rp/(rp.sum())
-            coords = np.sqrt(rp)
-            for i in range(dim):
-                dim_arr[i].append(coords[i]*R)
+    if 'vMF' in datadist:
+        # Only works for a circle right now
+        assert(dim == 2)
+
+        mean_vector_angles = np.arange(0, 360, 360/vMF_centroids)
+        centroids = []
+        for angle in mean_vector_angles:
+            x1 =  math.cos(math.radians(angle+5))
+            x2 =  math.sin(math.radians(angle+5))
+            centroids.append(torch.tensor([x1,x2]))
+
+        mu = torch.stack(centroids)
+        kappa = torch.ones(torch.Size((vMF_centroids,1)))
+        distribution = vMF(mu, kappa)
     
-    return np.array(dim_arr).T
+    samples = []
+    for sample in range(int(n/vMF_centroids)):
+        samples.append(distribution.rsample(sample_shape=mu.shape))
+    
+    samples = torch.stack(samples).view(-1,2)
+    return samples
 
 
 class Nonlinearity(nn.Module):
@@ -115,9 +124,3 @@ class SyntheticHypersphereDataset(Dataset):
     def __getitem__(self, idx):
         x_i = self.x[idx]
         return x_i, torch.Tensor(np.zeros(x_i.shape))
-
-
-
-
-
-
