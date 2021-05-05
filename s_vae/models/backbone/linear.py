@@ -26,7 +26,6 @@ class LinearDecoder(nn.Module):
         self.in_dim = in_dim
         self.hidden_dims = hidden_dims
         self.fix_var = fix_var
-        self.fix_var = fix_var
         if fix_var():
             self._fix_var = fix_var()
         else:
