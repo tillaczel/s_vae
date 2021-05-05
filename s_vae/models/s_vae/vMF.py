@@ -22,7 +22,7 @@ class vMF(Distribution):
     support = torch.distributions.constraints.real_vector
     has_rsample = True
 
-    def __init__(self, mu, kappa, device=None, validate_args=None):
+    def __init__(self, mu, kappa, device=lambda: 'cpu', validate_args=None):
         super().__init__(mu.size(), validate_args=validate_args)
 
         self.loc = mu  # The mean direction vector
