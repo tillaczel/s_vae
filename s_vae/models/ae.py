@@ -3,17 +3,17 @@ from torch.nn import functional as F
 
 
 class AE(nn.Module):
-    def __init__(self, encoder: nn.Module, decoder: nn.Module, encoder_out_dim: int, latent_dim: int):
+    def __init__(self, encoder: nn.Module, decoder: nn.Module, latent_dim: int):
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
         self.latent_dim = latent_dim
-        self.latent = nn.Linear(in_features=encoder_out_dim, out_features=latent_dim)
+        self.latent = nn.Linear(in_features=encoder.out_dim, out_features=latent_dim)
 
     def forward(self, x):
         encoded = self.encoder(x)
         z = self.latent(encoded)
-        x_hat = self.decoder(z)
+        x_hat, _ = self.decoder(z)
         return x_hat, z
 
     def step(self, x):

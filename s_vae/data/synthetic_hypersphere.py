@@ -12,6 +12,7 @@ import math
 from s_vae.models.s_vae.unif_on_sphere import UnifOnSphere
 from s_vae.models.s_vae.vMF import vMF
 
+
 def generate_latent_data(n, dim=2, R=1, datadist=None, vMF_centroids = 5 , seed=0, device = 'cpu'):
     """
     A function for generating n randomly distributed
@@ -27,14 +28,14 @@ def generate_latent_data(n, dim=2, R=1, datadist=None, vMF_centroids = 5 , seed=
                    vMF_centroids number of mean-vectors.
     """
     if datadist is None:
-        datadist = ['uniform', 'skew']
+        datadist = ['uniform', 'vMF']
 
     np.random.seed(seed)
 
     dim_arr = [[] for _ in range(dim)]
             
     if 'uniform' in datadist:
-        distribution = UnifOnSphere(dim, device)
+        distribution = UnifOnSphere(dim, lambda: device)
         samples = distribution.sample(torch.Size((n,)))
 
     if 'vMF' in datadist:
@@ -44,20 +45,21 @@ def generate_latent_data(n, dim=2, R=1, datadist=None, vMF_centroids = 5 , seed=
         mean_vector_angles = np.arange(0, 360, 360/vMF_centroids)
         centroids = []
         for angle in mean_vector_angles:
-            x1 =  math.cos(math.radians(angle+5))
-            x2 =  math.sin(math.radians(angle+5))
+            x1 = math.cos(math.radians(angle+5))
+            x2 = math.sin(math.radians(angle+5))
             centroids.append(torch.tensor([x1,x2]))
 
         mu = torch.stack(centroids)
         kappa = torch.ones(torch.Size((vMF_centroids,1)))
         distribution = vMF(mu, kappa)
     
-    samples = []
+    samples, categs = [], []
     for sample in range(int(n/vMF_centroids)):
         samples.append(distribution.rsample(sample_shape=mu.shape))
+        categs.extend(range(mu.shape[0]))
     
-    samples = torch.stack(samples).view(-1,2)
-    return samples
+    samples = torch.stack(samples).view(-1, 2)
+    return samples, categs
 
 
 class Nonlinearity(nn.Module):
@@ -95,32 +97,35 @@ def create_synthetic_hypersphere(path: str, latent_dim, observed_dim, n_dev_samp
             os.makedirs(raw_path)
 
         n_samples = n_dev_samples+n_test_samples
-        latent_data = generate_latent_data(n_samples, dim=latent_dim, datadist=['uniform'], seed=seed)
+        latent_data, categs = generate_latent_data(n_samples, dim=latent_dim, seed=seed)
         observed_data = generate_observed_data(latent_data, dim=observed_dim, seed=seed)
 
         latent_data_dev, latent_data_test = latent_data[:n_dev_samples], latent_data[-n_test_samples:]
         observed_data_dev, observed_data_test = observed_data[:n_dev_samples], observed_data[-n_test_samples:]
 
-        np.savetxt(f'{raw_path}/latent_data_dev_{tag}.csv', latent_data_dev.astype(float), delimiter=',')
-        np.savetxt(f'{raw_path}/latent_data_test_{tag}.csv', latent_data_test.astype(float), delimiter=',')
+        np.savetxt(f'{raw_path}/latent_data_dev_{tag}.csv', latent_data_dev.numpy().astype(float), delimiter=',')
+        np.savetxt(f'{raw_path}/latent_data_test_{tag}.csv', latent_data_test.numpy().astype(float), delimiter=',')
         np.savetxt(f'{raw_path}/observed_data_dev_{tag}.csv', observed_data_dev.astype(float), delimiter=',')
         np.savetxt(f'{raw_path}/observed_data_test_{tag}.csv', observed_data_test.astype(float), delimiter=',')
 
-    dataset = SyntheticHypersphereDataset(observed_data_dev)
+    dataset = SyntheticHypersphereDataset(observed_data_dev, categs)
     train_size = int(train_ratio * len(dataset))
     train_set, valid_set = random_split(dataset, [train_size, len(dataset)-train_size])
-    test_set = SyntheticHypersphereDataset(observed_data_test)
+    test_set = SyntheticHypersphereDataset(observed_data_test, categs)
 
     return train_set, valid_set, test_set
 
 
 class SyntheticHypersphereDataset(Dataset):
-    def __init__(self, x: np.array):
+    def __init__(self, x: np.array, , y: np.array):
         self.x = torch.tensor(x)
+        self.y = torch.tensor(y)
 
     def __len__(self):
         return self.x.shape[0]
 
     def __getitem__(self, idx):
         x_i = self.x[idx]
-        return x_i, torch.tensor(np.zeros(x_i.shape))
+        y_i = self.y[idx]
+        return x_i, y_i
+
