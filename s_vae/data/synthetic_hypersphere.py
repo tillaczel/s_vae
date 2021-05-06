@@ -116,11 +116,11 @@ def create_synthetic_hypersphere(path: str, latent_dim, observed_dim, n_dev_samp
 
 class SyntheticHypersphereDataset(Dataset):
     def __init__(self, x: np.array):
-        self.x = torch.Tensor(x)
+        self.x = torch.tensor(x)
 
     def __len__(self):
         return self.x.shape[0]
 
     def __getitem__(self, idx):
         x_i = self.x[idx]
-        return x_i, torch.Tensor(np.zeros(x_i.shape))
+        return x_i, torch.tensor(np.zeros(x_i.shape))
